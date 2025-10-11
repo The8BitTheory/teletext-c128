@@ -1,0 +1,15 @@
+{
+    "name": "c128text",
+    "description": "Project wic128-library",
+    "toolkit": "acme",
+    "sources": [
+        "src/c128text.asm"
+    ],
+    "build": "debug",
+    "definitions": [],
+    "includes": [
+        "."
+    ],
+    "args": [],
+    "compiler": ""
+}

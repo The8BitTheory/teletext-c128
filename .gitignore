@@ -2,3 +2,4 @@
 *.sym
 *.bin
 *.dasm
+/build
