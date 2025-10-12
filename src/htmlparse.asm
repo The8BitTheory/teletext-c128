@@ -40,6 +40,9 @@ findNextTag
     bne +
     jsr parseSpecialCharacter ; output according to special char will happen
 
+    cmp #13
+    beq findNextTag
+
 +   jsr bsout ; if a regular character is found, put it on the screen
 
     jmp findNextTag
@@ -93,13 +96,7 @@ parseTag:
 
 parseEndTag:
 
-    ; clear current_tag information, so we don't run into any side-effects
-    ; .a contains '/' at this point
-    lda current_tag
-    pha
-    lda #0
-    sta current_tag
-    pla
+    jsr readNextByte
 
     ;d screen address to next line
     cmp #$64 ; d
@@ -132,6 +129,11 @@ parseTagNobr
     jmp findNextTag
 
 parseTagDiv
+    lda #27
+    jsr bsout
+    lda #'J'
+    jsr bsout
+
     jsr skipUntilTagEnd
     jmp findNextTag
 
@@ -140,20 +142,26 @@ parseTagSpan
     jmp findNextTag
 
 parse_end_tag_d:
-    lda #$d
-    jsr bsout
+    ;lda #$d
+    ;lda #19
+    ;jsr bsout
+;    lda #27
+;    jsr bsout
+;    lda #'J'
+;    jsr bsout
 
     ;set screen address to next line
     ldx scanline
     clc
     lda screen_line_offsets,x
     adc offset_vram
+    sta offset_vram
     bcc +
     inc offset_vram+1
 
 +   inc scanline
     jsr skipUntilTagEnd
-    rts
+    jmp findNextTag
 
 parse_end_tag_a:
     ;todo: mark end of link

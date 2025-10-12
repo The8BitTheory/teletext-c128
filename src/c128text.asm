@@ -9,6 +9,9 @@ bsout = $ffd2
 
 data_response = $2400
 
+;slow:127
+;fast:69
+
 *= $1c01
     !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
@@ -32,7 +35,9 @@ main:
     lda #>data_response
     sta $fc
 
-    lda #14 ; lower case charset
+    lda #14         ; lower case charset
+    jsr bsout
+    lda #147      ; clear screen
     jsr bsout
 
     jsr parseHtml
