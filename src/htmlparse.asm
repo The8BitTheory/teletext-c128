@@ -3,6 +3,18 @@
 address_html = $fb
 address_vram = $fd
 
+; ------------------
+; ard-text
+; ---------------
+; div can be ignored -> just skip until >
+; </div> leads to linebreak
+; all other end-tags "/"" can be ingored -> just skip until >
+; <span get fgX and bgX, ignore all other attributes
+; <nobr can be ignored
+; <img src attribute leads to next output character
+; > always leads to character-parsing mode
+
+
 parseHtml
     ldy #0
     sty offset_html
@@ -11,43 +23,74 @@ parseHtml
     sty offset_vram+1
 
 ;parse the first character
-parse_text:
-    lda (address_html),y
-    iny
+findNextTag
+    jsr readNextByte
     
     cmp #$3c ; <
-    beq parse_tag
+    bne +
+    jmp parseTag   ; handle characters until '>' is found
 
-    cmp #$26 ; &
-    beq parse_special_character
++   cmp #$26 ; &
+    bne +
+    jsr parseSpecialCharacter ; output according to special char will happen
 
-    jmp write_character
++   jsr bsout ; if a regular character is found, put it on the screen
 
-parse_tag:
-    lda (address_html),y
-    iny
+    jmp findNextTag
+
+parseTag:
+    jsr readNextByte
 
     cmp #$2f ; /
-    beq parse_end_tag
+    bne +
+    jmp parseEndTag
+
++   sta current_tag
+
+    cmp #'d';
+    bne +
+    jmp parseTagDiv
 
     ; this is only valid if a tag-name was parsed before. but we'll just go with that for now
-    cmp #$20 ; space
+    ; should be handled inside the specific tag routines (ie for div, for span, etc)
+;+   cmp #$20 ; space
+;    bne +
+;    jmp parseAttribute
+
+    ; should be handled inside the specific tag routines
+;+   cmp #$3e ; >
+;    bne +
+;    jmp findNextTag
+
++   cmp  #$61 ; a
     bne +
-    jmp parse_attribute
+    jmp parseTagLink
 
-+   cmp #$3e ; >
-    beq parse_text
-
-    cmp  #$61 ; a
++   cmp #'s'
     bne +
-    jmp parse_link
+    jmp parseTagSpan
 
-    ;ignore all other characters
-+   jmp parse_tag
++   cmp #'n'
+    bne +
+    jmp parseTagNobr
 
-parse_end_tag:
-    lda (address_html),y
-    iny
++   cmp #'i'
+    bne +
+    jmp parseTagImg
+
+    ;ignore all other tags and go until the end
++   jsr skipUntilTagEnd
+    jmp parseTag
+
+parseEndTag:
+
+    ; clear current_tag information, so we don't run into any side-effects
+    ; .a contains '/' at this point
+    lda current_tag
+    pha
+    lda #0
+    sta current_tag
+    pla
 
     ;d screen address to next line
     cmp #$64 ; d
@@ -58,14 +101,39 @@ parse_end_tag:
     beq parse_end_tag_a
 
     ;ignore all other characters. skip 
+    jsr skipUntilTagEnd
+    jmp findNextTag
 
-parse_end_tag_end:
+skipUntilTagEnd:
     lda #$3e ; >
     sta skip_until
-    jsr skip_until_character
-    jmp parse_text
+    jsr skipUntilCharacter
+    rts
+
+parseTagLink:
+    jsr skipUntilTagEnd
+    jmp findNextTag
+
+parseTagImg
+    jsr skipUntilTagEnd
+    jmp findNextTag
+
+parseTagNobr
+    jsr skipUntilTagEnd ; skip until <nobr> is complete
+    jmp findNextTag
+
+parseTagDiv
+    jsr skipUntilTagEnd
+    jmp findNextTag
+
+parseTagSpan
+    jsr skipUntilTagEnd
+    jmp findNextTag
 
 parse_end_tag_d:
+    lda #$d
+    jsr bsout
+
     ;set screen address to next line
     ldx scanline
     clc
@@ -75,110 +143,140 @@ parse_end_tag_d:
     inc offset_vram+1
 
 +   inc scanline
-    jmp parse_end_tag_end
+    jsr skipUntilTagEnd
+    rts
 
 parse_end_tag_a:
     ;todo: mark end of link
-    jmp parse_end_tag_end
+    jsr skipUntilTagEnd
+    jmp findNextTag
     
-skip_until_character:
-    lda (address_html),y
-    iny
+; this increases read address until the specified character is reached
+;  after that, we continue regular text parsing, which might immediately
+;  come up with the next non-text data, of course.
+skipUntilCharacter:
+    jsr readNextByte
 
     cmp skip_until
-    bne skip_until_character
+    bne skipUntilCharacter
 
     rts
 
-parse_special_character:
-    lda (address_html),y
-    iny
 
-    cmp 'n' ; n
+parseSpecialCharacter:
+    jsr readNextByte
+ 
+    cmp #'n' ; n
     bne +
-    lda ' '
-    jmp write_character
+    lda #' '
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'a' ; a
++   cmp #'a' ; a
     bne +
     ;lda 'ä'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'A' ; A
++   cmp #'A' ; A
     bne +
     ;lda 'Ä'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'o' ; o
++   cmp #'o' ; o
     bne +
     ;lda 'ö'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'O' ; O
++   cmp #'O' ; O
     bne +
     ;lda 'Ö'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'u' ; u
++   cmp #'u' ; u
     bne +
     ;lda 'ü'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'U' ; U
++   cmp #'U' ; U
     bne +
     ;lda 'Ü'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 's' ; s
++   cmp #'s' ; s
     bne +
     ;lda 'ß'
-    jmp write_character
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'g' ; g
++   cmp #'g' ; g
     bne +
-    lda '>'
-    jmp write_character
+    lda #'>'
+    jmp doneSpecialCharacterHandling
 
-+   cmp 'l' ; l
++   cmp #'l' ; l
     bne +
-    lda '<'
-    jmp write_character
+    lda #'<'
+    jmp doneSpecialCharacterHandling
 
-parse_special_character_end:
-    ;ignore all other &; sections
-+   
-    ;skip until ;
-    lda #$3b ; ;
-    jsr skip_until_character
-    jmp parse_text
+;   no known sequence. just skip
++   lda #$3b ; ;
+    sta skip_until
+    jmp skipUntilCharacter
 
-parse_attribute:
+
+doneSpecialCharacterHandling
+    pha
+    lda #';' ; ;
+    sta skip_until
+    jsr skipUntilCharacter
+    pla
+    rts
+    
+
+skipUntilQuote
+    lda #'"'    ; load quote "
+    jsr skipUntilCharacter
+    jmp findNextTag
+
+parseAttribute:
 
     rts
 
-parse_attribute_class:
+parseAttribute_class:
     rts
 
-parse_attribute_src:
+parseAttribute_src:
     rts
 
-parse_link:
+
+parseDone:
     rts
 
-write_character:
-    jsr bsout
-    jmp parse_text
+
+readNextByte
+    dec wic64_response_size
+    bne +
+    dec wic64_response_size+1
+    bpl +
+
+    rts
+
++   lda (address_html),y
+    iny
+    bne +
+    inc address_html+1
+
++   rts
+
 
     
 screen_line_offsets !word 0,80,160,240,320,400,480,560,640,720,800,880,960,1040,1120,1200,1280,1360,1440,1520,1600,1680,1760,1840,1920
 
-color_fg !byte 0
-color_bg !byte 0
-parse_mode !byte 0
-skip_until !byte 0
+color_fg    !byte 0
+color_bg    !byte 0
+current_tag !byte 0
+skip_until  !byte 0
 offset_html !word 0
 offset_vram !word 0
-scanline !byte 0
+scanline    !byte 0
 
 ; special characters
 ; nbsp

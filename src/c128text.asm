@@ -7,6 +7,7 @@ k_primm = $ff7d
 ;strout = $B47C
 bsout = $ffd2
 
+data_response = $2300
 
 *= $1c01
     !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
@@ -26,17 +27,15 @@ main:
     bcs timeout
     bne error
 
-
-
     lda #<data_response
     sta $fb
     lda #>data_response
     sta $fc
 
-    jsr parseHtml
+    lda #14 ; lower case charset
+    jsr bsout
 
-;    lda #14
-;    jsr bsout
+    jsr parseHtml
 
 ;    ldy #0
 ;-   lda ($fb),y
@@ -121,7 +120,7 @@ orf_url:        !text "https://www.ard-text.de/page_only.php?page=101"
 orf_url_size = * - orf_url
 
 ;data_response: !fill 2048,0
-data_response = $2200
+
 
 ; include the actual wic64 routines
 !source "wic64.asm"
