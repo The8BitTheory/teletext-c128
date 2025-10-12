@@ -17,6 +17,9 @@ address_vram = $fd
 
 parseHtml
     ldy #0
+;    sty eof
+    sty current_tag
+    sty scanline
     sty offset_html
     sty offset_html+1
     sty offset_vram
@@ -25,8 +28,11 @@ parseHtml
 ;parse the first character
 findNextTag
     jsr readNextByte
+    ldx eof
+    beq +
+    rts
     
-    cmp #$3c ; <
++   cmp #$3c ; <
     bne +
     jmp parseTag   ; handle characters until '>' is found
 
@@ -40,8 +46,11 @@ findNextTag
 
 parseTag:
     jsr readNextByte
+    ldx eof
+    beq +
+    rts
 
-    cmp #$2f ; /
++   cmp #$2f ; /
     bne +
     jmp parseEndTag
 
@@ -156,8 +165,11 @@ parse_end_tag_a:
 ;  come up with the next non-text data, of course.
 skipUntilCharacter:
     jsr readNextByte
+    ldx eof
+    beq +
+    rts
 
-    cmp skip_until
++   cmp skip_until
     bne skipUntilCharacter
 
     rts
@@ -165,8 +177,11 @@ skipUntilCharacter:
 
 parseSpecialCharacter:
     jsr readNextByte
- 
-    cmp #'n' ; n
+    ldx eof
+    beq +
+    rts
+
++   cmp #'n' ; n
     bne +
     lda #' '
     jmp doneSpecialCharacterHandling
@@ -257,14 +272,20 @@ readNextByte
     dec wic64_response_size+1
     bpl +
 
-    rts
+    ; if end of data is reached, write 1 to x
+    ldx #1
+    jmp readDone
 
 +   lda (address_html),y
     iny
     bne +
     inc address_html+1
+    ; end of data not reached, write 0 to x
++   ldx #0
 
-+   rts
+readDone
+    stx eof
+    rts
 
 
     
@@ -277,6 +298,7 @@ skip_until  !byte 0
 offset_html !word 0
 offset_vram !word 0
 scanline    !byte 0
+eof         !byte 0
 
 ; special characters
 ; nbsp

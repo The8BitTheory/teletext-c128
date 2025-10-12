@@ -7,7 +7,7 @@ k_primm = $ff7d
 ;strout = $B47C
 bsout = $ffd2
 
-data_response = $2300
+data_response = $2400
 
 *= $1c01
     !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
