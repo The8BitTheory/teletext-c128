@@ -167,6 +167,16 @@ orf_url:        !text "https://www.ard-text.de/page_only.php?page="
 input           !text '1','0','0'
 orf_url_size = * - orf_url
 
+; ARD colors
+; w=white   #87
+; b=black   #66
+; bl=blue   #66,#76 -> 142
+; y=yellow  #89
+; m=magenta #77
+; c=cyan    #67
+; r=red     #82
+; g=green   #71
+colors          !byte 0
 
 digit           !byte 0
 minInput        !byte '1','0','0'
