@@ -19,7 +19,8 @@ parseHtml
     ldy #0
 ;    sty eof
     sty current_tag
-    sty scanline
+    sty screenline
+    sty screencol
     sty offset_html
     sty offset_html+1
     sty offset_vram
@@ -43,9 +44,36 @@ findNextTag
     cmp #13
     beq findNextTag
 
-+   jsr bsout ; if a regular character is found, put it on the screen
++   jsr outputCharacter ; if a regular character is found, put it on the screen
 
     jmp findNextTag
+
+outputCharacter
+    pha
+
+    ldy offset_vram    
+    sta (address_vram),y
+
+    lda address_vram+1
+    clc
+    adc #4
+    sta address_vram+1
+
+    lda color_fg
+    sta (address_vram),y
+
+    lda address_vram+1
+    sec
+    sbc #4
+    sta address_vram+1
+
+    iny
+    sty offset_vram
+    bne +
+    inc address_vram+1
+
++   pla
+    jmp bsout
 
 parseTag:
     jsr readNextByte
@@ -167,7 +195,7 @@ parseTagImg
     ; parse graphic character (from 0x20 to 0x7f or so)
 +   jsr parseGraphicCharacter
 
-    jsr bsout
+    jsr outputCharacter
 
     ; skip until '>'
     jsr skipUntilTagEnd
@@ -216,7 +244,7 @@ parseGraphicCharacter
     sbc #55
     
 ++  ora currentChar
-    sta currentChar
+    ;sta currentChar
 
     ; now, subtract $20 if smaller than $40, else subtract  $40 (larger than $60)
     cmp #$40
@@ -228,7 +256,7 @@ parseGraphicCharacter
 +   sec
     sbc #$40
 
-++  sta currentChar
+++  ;sta currentChar
     clc
     adc graphicsOffset
     sta currentChar
@@ -312,13 +340,17 @@ parseTagNobr
     jmp findNextTag
 
 parseTagDiv
+    jsr beginningOfNextLine
+
+    jsr skipUntilTagEnd
+    jmp findNextTag
+
+beginningOfNextLine
     lda #27
     jsr bsout
     lda #'J'
     jsr bsout
-
-    jsr skipUntilTagEnd
-    jmp findNextTag
+    rts
 
 parseTagSpan
     jsr skipUntilTagEnd
@@ -327,7 +359,7 @@ parseTagSpan
 parse_end_tag_d:
 
     ;set screen address to next line
-    ldx scanline
+    ldx screenline
     clc
     lda screen_line_offsets,x
     adc offset_vram
@@ -335,7 +367,7 @@ parse_end_tag_d:
     bcc +
     inc offset_vram+1
 
-+   inc scanline
++   inc screenline
     jsr skipUntilTagEnd
     jmp findNextTag
 
@@ -460,12 +492,14 @@ readNextByte
     ldx #1
     jmp readDone
 
+    ldy offset_html
 +   lda (address_html),y
     iny
     bne +
     inc address_html+1
     ; end of data not reached, write 0 to x
 +   ldx #0
+    sty offset_html
 
 readDone
     stx eof
@@ -481,7 +515,8 @@ current_tag !byte 0
 skip_until  !byte 0
 offset_html !word 0
 offset_vram !word 0
-scanline    !byte 0
+screenline  !byte 0
+screencol   !byte 0
 eof         !byte 0
 graphicsOffset !byte 0
 currentChar !byte 0

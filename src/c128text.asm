@@ -10,8 +10,19 @@ bsout = $ffd2
 
 ;data_response = $2400
 
+; -- parsing only text, skipping over graphic characters (textmode)
 ;slow:127
 ;fast:69
+
+; -- with graphic character parsing (textmode)
+;slow vdc:389
+;fast vdc:102
+;slow vic:156
+
+; vdc charset: 16x8 pixels per character. 640x200 resolution. top-line: user input
+; 40x24 characters text screen (960 bytes)
+; 40x24 bytes attribute ram (960 bytes)
+; -- 
 
 *= $1c01
     !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
@@ -48,6 +59,11 @@ requestPage:
     sta $fb
     lda #>data_response
     sta $fc
+
+    lda #<screen_prep
+    sta $fd
+    lda #>screen_prep
+    sta $fe
 
     lda #147      ; clear screen
     jsr bsout
@@ -175,5 +191,7 @@ minInput        !byte '1','0','0'
 !source "src/htmlparse.asm"
 !source "src/vdcdisplay.asm"
 
-data_response !byte 0
+screen_prep = *
+
+data_response = *+2048
 
