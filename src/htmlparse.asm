@@ -100,14 +100,16 @@ parseEndTag:
 
     ;d screen address to next line
     cmp #$64 ; d
-    beq parse_end_tag_d
+    bne +
+    jmp parse_end_tag_d
 
     ;a mark end of link
-    cmp #$61 ; a
-    beq parse_end_tag_a
++   cmp #$61 ; a
+    bne +
+    jmp parse_end_tag_a
 
     ;ignore all other characters. skip 
-    jsr skipUntilTagEnd
++   jsr skipUntilTagEnd
     jmp findNextTag
 
 skipUntilTagEnd:
@@ -116,13 +118,135 @@ skipUntilTagEnd:
     jsr skipUntilCharacter
     rts
 
+skipUntilDigit:
+
+    rts
+
 parseTagLink:
     jsr skipUntilTagEnd
     jmp findNextTag
 
+; the image tag is interesting because we get graphical characters from them
+; eg <img src='./img/g1b70.gif'>
+; or <img src='./img/g1sbl6f.gif'>
+; where the g1 is graphic characters without spaces and b is black and 70 is the character
+; (we might ignore the 'b' because it might be redundant from the parent span's class)
 parseTagImg
+    ; skip <img src='./img/g1b' -> 17 characters
+    lda #16
+    sta skip_until
+-   jsr readNextByte
+    dec skip_until
+    bne -
+
+    cmp #'s'    ;separated graphics?
+    bne .separateGraphics       ;not S means it's already a color. handle accordingly
+    
+    ; lda #regular
+    ; sta whatever
+    jsr readNextByte
+    jmp +
+
+.separateGraphics
+    ; lda #separate
+    ; sta whatever
+
+; skip over color parsing.
+; is redundant to parent span. saves us a lot of work
+; skipUntilDigit works b/c graphic characters are uniquely different to colors (0x20 to 0x7f)
+    jsr skipUntilDigit
+;+   jsr parseColor  ; stores foregroundcolor. A contains next byte (after color) after this
+
+    ; parse special character (from 0x20 to 0x7f or so)
++   jsr parseGraphicCharacter
+
+    ; skip until '>'
     jsr skipUntilTagEnd
     jmp findNextTag
+
+
+; graphic characters go from 0x20 to 0x7f, leaving out 0x40-0x5f
+; we have 64 contiguous and 64 separated ones
+; 000-127 are latin characters
+; 128-191 are contiguous graphic characters
+; 192-255 are separated graphic characters
+parseGraphicCharacter
+    ;left character: 2-3: subtract 48 ($30), shift left 4 times / 6-7: subtract 64 (and shift)
+    ;right character: 0-f. subtract 48 or 64, then OR with shifted left character
+    ;add 128 (OR 128) for contiguous, or 192 for separated graphics
+    rts
+
+; ARD colors
+; w=white   #87
+; y=yellow  #89
+; m=magenta #77
+; c=cyan    #67
+; r=red     #82
+; g=green   #71
+; b=black   #66
+; bl=blue   #66,#76 -> 142
+
+parseColor
+    cmp #'w'
+    bne +
+    lda #$f
+    bne setForegroundColor
+
++   cmp #'y'
+    bne +
+    lda #$d
+    bne setForegroundColor
+
++   cmp #'m'
+    bne +
+    lda #$b
+    bne setForegroundColor
+
++   cmp #'c'
+    bne +
+    lda #$7
+    bne setForegroundColor
+
++   cmp #'r'
+    bne +
+    lda #$8
+    bne setForegroundColor
+
++   cmp #'g'
+    bne +
+    lda #$4
+    bne setForegroundColor
+
++   cmp #'b'
+    bne invalidColor
+    ; we have to check whether it's 'b' or 'bl'
+    jsr readNextByte
+
+    cmp #'l'
+    beq setBlue
+    
+    pha ;push value to stack
+    bne setBlack
+
+invalidColor
+    lda #$e
+    bne setForegroundColor
+
+setBlue
+    jsr readNextByte
+    pha
+
+    lda #$2
+    bne setForegroundColor
+
+setBlack
+    lda #$0
+
+setForegroundColor
+    ; sta #foregroundcolor
+    pla
+    rts
+    
 
 parseTagNobr
     jsr skipUntilTagEnd ; skip until <nobr> is complete
@@ -307,6 +431,16 @@ offset_html !word 0
 offset_vram !word 0
 scanline    !byte 0
 eof         !byte 0
+
+; ARD colors
+; w=white   #87
+; b=black   #66
+; bl=blue   #66,#76 -> 142
+; y=yellow  #89
+; m=magenta #77
+; c=cyan    #67
+; r=red     #82
+; g=green   #71
 
 ; special characters
 ; nbsp
