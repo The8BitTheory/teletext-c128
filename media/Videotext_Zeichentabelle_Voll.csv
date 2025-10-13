@@ -1,0 +1,129 @@
+Code (hex),Textmodus,Grafikmodus (Textmuster),Typ,Beschreibung,Anmerkung
+0x00,,,Steuerzeichen,Alpha White,Textmodus: Weiß
+0x01,,,Steuerzeichen,Graphics White,Grafikmodus: Weiß
+0x02,,,Steuerzeichen,Red,Vordergrundfarbe Rot
+0x03,,,Steuerzeichen,Green,Vordergrundfarbe Grün
+0x04,,,Steuerzeichen,Yellow,Vordergrundfarbe Gelb
+0x05,,,Steuerzeichen,Blue,Vordergrundfarbe Blau
+0x06,,,Steuerzeichen,Magenta,Vordergrundfarbe Magenta
+0x07,,,Steuerzeichen,Cyan,Vordergrundfarbe Cyan
+0x08,,,Steuerzeichen,Flash,Blinkmodus ein
+0x09,,,Steuerzeichen,Steady,Blinkmodus aus
+0x0A,,,Steuerzeichen,End Box,Beendet Hintergrundblock
+0x0B,,,Steuerzeichen,Start Box,Startet Hintergrundblock
+0x0C,,,Steuerzeichen,Normal Height,Normale Textzeilenhöhe
+0x0D,,,Steuerzeichen,Double Height,Doppelte Textzeilenhöhe
+0x0E,,,Steuerzeichen,Shift Out,Umschaltung Grafikmodus
+0x0F,,,Steuerzeichen,Shift In,Umschaltung Textmodus
+0x10,,,Steuerzeichen,Black Background,Schwarzer Hintergrund
+0x11,,,Steuerzeichen,New Background,Aktuellen Hintergrund übernehmen
+0x12,,,Steuerzeichen,Hold Graphics,Grafikmuster halten
+0x13,,,Steuerzeichen,Release Graphics,Grafikmuster freigeben
+0x14,,,Steuerzeichen,Conceal Display,Zeichen ausblenden
+0x15,,,Steuerzeichen,Contiguous Graphics,Zusammenhängende Mosaike
+0x16,,,Steuerzeichen,Separated Graphics,Getrennte Mosaike
+0x17,,,Steuerzeichen,ESC,Reserviert / Steuersequenzen
+0x18,,,Steuerzeichen,Black,Vordergrundfarbe Schwarz
+0x19,,,Steuerzeichen,Reserved,Nicht verwendet
+0x1A,,,Steuerzeichen,Alpha Black,Textmodus: Schwarz
+0x1B,,,Steuerzeichen,Repeat,Wiederholungscode
+0x1C,,,Steuerzeichen,Reserved,Nicht verwendet
+0x1D,,,Steuerzeichen,Reserved,Nicht verwendet
+0x1E,,,Steuerzeichen,Reserved,Nicht verwendet
+0x1F,,,Steuerzeichen,Reserved,Nicht verwendet
+0x20, ,[░░][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x21,!,[█░][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x22,"""",[░█][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x23,#,[██][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x24,$,[░░][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x25,%,[█░][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x26,&,[░█][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x27,',[██][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x28,(,[░░][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x29,),[█░][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x2A,*,[░█][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x2B,+,[██][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x2C,",",[░░][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x2D,-,[█░][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x2E,.,[░█][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x2F,/,[██][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x30,0,[░░][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x31,1,[█░][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x32,2,[░█][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x33,3,[██][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x34,4,[░░][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x35,5,[█░][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x36,6,[░█][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x37,7,[██][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x38,8,[░░][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x39,9,[█░][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x3A,:,[░█][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x3B,;,[██][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x3C,<,[░░][██][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x3D,=,[█░][██][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x3E,>,[░█][██][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x3F,?,[██][██][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x40,@,[░░][░░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x41,A,[█░][░░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x42,B,[░█][░░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x43,C,[██][░░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x44,D,[░░][█░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x45,E,[█░][█░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x46,F,[░█][█░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x47,G,[██][█░][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x48,H,[░░][░█][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x49,I,[█░][░█][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x4A,J,[░█][░█][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x4B,K,[██][░█][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x4C,L,[░░][██][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x4D,M,[█░][██][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x4E,N,[░█][██][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x4F,O,[██][██][░█],Alphanumerisch / Grafik,Standardzeichen,
+0x50,P,[░░][░░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x51,Q,[█░][░░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x52,R,[░█][░░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x53,S,[██][░░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x54,T,[░░][█░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x55,U,[█░][█░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x56,V,[░█][█░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x57,W,[██][█░][██],Alphanumerisch / Grafik,Standardzeichen,
+0x58,X,[░░][░█][██],Alphanumerisch / Grafik,Standardzeichen,
+0x59,Y,[█░][░█][██],Alphanumerisch / Grafik,Standardzeichen,
+0x5A,Z,[░█][░█][██],Alphanumerisch / Grafik,Standardzeichen,
+0x5B,[,[██][░█][██],Alphanumerisch / Grafik,Standardzeichen,
+0x5C,\,[░░][██][██],Alphanumerisch / Grafik,Standardzeichen,
+0x5D,],[█░][██][██],Alphanumerisch / Grafik,Standardzeichen,
+0x5E,^,[░█][██][██],Alphanumerisch / Grafik,Standardzeichen,
+0x5F,_,[██][██][██],Alphanumerisch / Grafik,Standardzeichen,
+0x60,`,[░░][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x61,a,[█░][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x62,b,[░█][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x63,c,[██][░░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x64,d,[░░][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x65,e,[█░][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x66,f,[░█][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x67,g,[██][█░][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x68,h,[░░][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x69,i,[█░][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x6A,j,[░█][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x6B,k,[██][░█][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x6C,l,[░░][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x6D,m,[█░][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x6E,n,[░█][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x6F,o,[██][██][░░],Alphanumerisch / Grafik,Standardzeichen,
+0x70,p,[░░][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x71,q,[█░][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x72,r,[░█][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x73,s,[██][░░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x74,t,[░░][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x75,u,[█░][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x76,v,[░█][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x77,w,[██][█░][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x78,x,[░░][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x79,y,[█░][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x7A,z,[░█][░█][█░],Alphanumerisch / Grafik,Standardzeichen,
+0x7B,Ä,[██][░█][█░],Alphanumerisch / Grafik,Deutsche Variante,
+0x7C,Ö,[░░][██][█░],Alphanumerisch / Grafik,Deutsche Variante,
+0x7D,Ü,[█░][██][█░],Alphanumerisch / Grafik,Deutsche Variante,
+0x7E,ß,[░█][██][█░],Alphanumerisch / Grafik,Deutsche Variante,
+0x7F,,[██][██][█░],Alphanumerisch / Grafik,Standardzeichen,

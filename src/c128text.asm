@@ -3,11 +3,12 @@
 !source "wic64.h"
 
 k_primm = $ff7d
+k_getin = $eeeb
 ;k_pokebank = $02af  ;.a=value to write, .x=bank, .y=offset from address in $02b9
 ;strout = $B47C
 bsout = $ffd2
 
-data_response = $2400
+;data_response = $2400
 
 ;slow:127
 ;fast:69
@@ -22,10 +23,23 @@ main:
     lda #%00001110
     sta $ff00
 
-    jsr detectAndFirmware
+    lda #14         ; lower case charset
+    jsr bsout
+    lda #147      ; clear screen
+    jsr bsout
 
+    jsr k_primm
+!pet "Detecting and querying firmware",0
+    jsr detectAndFirmware
+    jsr k_primm
+!pet "Querying IP",0
     jsr getIp
 
+    lda #147      ; clear screen
+    jsr bsout
+;    jmp handleInputClear
+
+requestPage:
     +wic64_execute orf_request, data_response
     bcs timeout
     bne error
@@ -35,32 +49,17 @@ main:
     lda #>data_response
     sta $fc
 
-    lda #14         ; lower case charset
-    jsr bsout
     lda #147      ; clear screen
     jsr bsout
-
     jsr parseHtml
 
-;    ldy #0
-;-   lda ($fb),y
-;    jsr bsout
-;    dec wic64_response_size
-;    bne +
-;    dec wic64_response_size+1
-;    bmi .done
+    jmp handleInputClear
 
-;+   iny
-;    bne -
-;    inc $fc
-;    jmp -
-
-.done
+endOfProgram
     lda #%00000000
     sta $ff00
 
     rts
-
 
 getIp
     +wic64_execute request, response        ; send request and receive the response
@@ -113,6 +112,49 @@ legacy_firmware:
     !pet "?legacy firmware error", $00
     rts
 
+handleInputClear
+    lda #19 ;home
+    jsr bsout
+
+handleInput
+    jsr k_getin
+    ldx digit
+    cmp minInput,x ; first digit needs to be 1-9, 2nd and 3rd can be 0-9
+    bcc handleInput
+    cmp #'9'+1
+    bcc evalInput
+    cmp #'X'
+    bne handleInput
+    jmp endOfProgram
+
+evalInput
+    ;store digit to input
+    ldx digit
+    sta input,x
+    ; increase digit
+    inc digit
+
+    jsr bsout
+
+    ; if max digit reached (3rd digit), bring cursor to start of line and do request
+    ldx digit
+    cpx #3
+    bne handleInput
+
+    ldx #0
+    stx digit
+    lda #$d
+    jsr bsout
+;    lda #27
+;    jsr bsout
+;    lda #'J'
+;    jsr bsout
+    lda #147      ; clear screen
+    jsr bsout
+
+    jmp requestPage
+
+
 ; define request to get the current ip address
 request !byte "R", WIC64_GET_IP, $00, $00
 
@@ -121,12 +163,17 @@ status_request: !byte "R", WIC64_GET_STATUS_MESSAGE, $01, $00, $01
 
 orf_request:    !byte "R",WIC64_HTTP_GET, <orf_url_size, >orf_url_size
 ;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
-orf_url:        !text "https://www.ard-text.de/page_only.php?page=101"
+orf_url:        !text "https://www.ard-text.de/page_only.php?page="
+input           !text '1','0','0'
 orf_url_size = * - orf_url
 
-;data_response: !fill 2048,0
 
+digit           !byte 0
+minInput        !byte '1','0','0'
 
 ; include the actual wic64 routines
 !source "wic64.asm"
 !source "src/htmlparse.asm"
+
+data_response !byte 0
+
