@@ -44,7 +44,7 @@ findNextTag
     cmp #13
     beq findNextTag
 
-+   jsr outputCharacter ; if a regular character is found, put it on the screen
++   jsr bsout;jsr outputCharacter ; if a regular character is found, put it on the screen
 
     jmp findNextTag
 
@@ -195,7 +195,7 @@ parseTagImg
     ; parse graphic character (from 0x20 to 0x7f or so)
 +   jsr parseGraphicCharacter
 
-    jsr outputCharacter
+    jsr bsout;outputCharacter
 
     ; skip until '>'
     jsr skipUntilTagEnd
@@ -359,15 +359,15 @@ parseTagSpan
 parse_end_tag_d:
 
     ;set screen address to next line
-    ldx screenline
-    clc
-    lda screen_line_offsets,x
-    adc offset_vram
-    sta offset_vram
-    bcc +
-    inc offset_vram+1
+;    ldx screenline
+;    clc
+;    lda screen_line_offsets,x
+;    adc offset_vram
+;    sta offset_vram
+;    bcc +
+;    inc offset_vram+1
 
-+   inc screenline
+;+   inc screenline
     jsr skipUntilTagEnd
     jmp findNextTag
 
@@ -494,12 +494,14 @@ readNextByte
 
     ldy offset_html
 +   lda (address_html),y
+    
     iny
+    sty offset_html
     bne +
     inc address_html+1
     ; end of data not reached, write 0 to x
 +   ldx #0
-    sty offset_html
+
 
 readDone
     stx eof
