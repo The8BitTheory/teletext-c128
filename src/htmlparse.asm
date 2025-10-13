@@ -119,8 +119,15 @@ skipUntilTagEnd:
     rts
 
 skipUntilDigit:
+    jsr readNextByte
 
-    rts
+    cmp #'9'+1
+    bcs skipUntilDigit     ;larger than '9'. not a digit
+
+    cmp #'0'
+    bcc skipUntilDigit     ;smaller than '0'. not a digit
+
++   rts
 
 parseTagLink:
     jsr skipUntilTagEnd
@@ -142,14 +149,14 @@ parseTagImg
     cmp #'s'    ;separated graphics?
     bne .separateGraphics       ;not S means it's already a color. handle accordingly
     
-    ; lda #regular
-    ; sta whatever
+    lda #128
+    sta graphicsOffset
     jsr readNextByte
     jmp +
 
 .separateGraphics
-    ; lda #separate
-    ; sta whatever
+    lda #192
+    sta graphicsOffset
 
 ; skip over color parsing.
 ; is redundant to parent span. saves us a lot of work
@@ -159,6 +166,8 @@ parseTagImg
 
     ; parse special character (from 0x20 to 0x7f or so)
 +   jsr parseGraphicCharacter
+
+    jsr bsout
 
     ; skip until '>'
     jsr skipUntilTagEnd
@@ -170,10 +179,49 @@ parseTagImg
 ; 000-127 are latin characters
 ; 128-191 are contiguous graphic characters
 ; 192-255 are separated graphic characters
+; <img src="./img/g1sbl28.gif">
 parseGraphicCharacter
+    ;.A holds first graphics character (hex-string)
+
     ;left character: 2-3: subtract 48 ($30), shift left 4 times / 6-7: subtract 64 (and shift)
+    ; eg 0x20 (32 dec) -> 128 or 192 (offset)
+    ;  "2" -> dec(50)-dec(48)=2-2=0
+    ;  "0" -> dec(48)-dec(48)=0
+    ;  "9" -> dec(57)-dec(48)=9
+    ;  "a" -> dec(65)-dec(55)=10
+    ;  "f" -> dec(70)-dec(55)=15
+
+    sec
+    sbc #48
+    asl
+    asl
+    asl
+    asl
+    sta currentChar
+
     ;right character: 0-f. subtract 48 or 64, then OR with shifted left character
     ;add 128 (OR 128) for contiguous, or 192 for separated graphics
+    jsr readNextByte
+    ; if 0-9 -> subtract 48
+    cmp #'9'+1
+    bcs +   ;larger than 9. goto a-f handling
+    sec
+    sbc #48
+    jmp ++
+
+    ; if a-f -> subtract 55
+    ; don't compare. assume it must be a-f for now
++   ;cmp #'z'+1
+    sec
+    sbc #55
+    
+++  ora currentChar
+    sta currentChar
+
+    clc
+    adc graphicsOffset
+    sta currentChar
+
     rts
 
 ; ARD colors
@@ -431,6 +479,8 @@ offset_html !word 0
 offset_vram !word 0
 scanline    !byte 0
 eof         !byte 0
+graphicsOffset !byte 0
+currentChar !byte 0
 
 ; ARD colors
 ; w=white   #87
