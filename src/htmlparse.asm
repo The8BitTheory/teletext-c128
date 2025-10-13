@@ -140,7 +140,7 @@ parseTagLink:
 ; (we might ignore the 'b' because it might be redundant from the parent span's class)
 parseTagImg
     ; skip <img src='./img/g1b' -> 17 characters
-    lda #16
+    lda #17
     sta skip_until
 -   jsr readNextByte
     dec skip_until
@@ -164,7 +164,7 @@ parseTagImg
     jsr skipUntilDigit
 ;+   jsr parseColor  ; stores foregroundcolor. A contains next byte (after color) after this
 
-    ; parse special character (from 0x20 to 0x7f or so)
+    ; parse graphic character (from 0x20 to 0x7f or so)
 +   jsr parseGraphicCharacter
 
     jsr bsout
@@ -218,6 +218,17 @@ parseGraphicCharacter
 ++  ora currentChar
     sta currentChar
 
+    ; now, subtract $20 if smaller than $40, else subtract  $40 (larger than $60)
+    cmp #$40
+    bcs +       ; larger than $40
+    sec
+    sbc #$20
+    jmp ++
+
++   sec
+    sbc #$40
+
+++  sta currentChar
     clc
     adc graphicsOffset
     sta currentChar
@@ -291,7 +302,7 @@ setBlack
     lda #$0
 
 setForegroundColor
-    ; sta #foregroundcolor
+    sta color_fg
     pla
     rts
     
@@ -314,13 +325,6 @@ parseTagSpan
     jmp findNextTag
 
 parse_end_tag_d:
-    ;lda #$d
-    ;lda #19
-    ;jsr bsout
-;    lda #27
-;    jsr bsout
-;    lda #'J'
-;    jsr bsout
 
     ;set screen address to next line
     ldx scanline
