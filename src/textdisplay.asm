@@ -1,8 +1,4 @@
 
-setupBitmapMode
-    
-    rts
-
 displayPage
     ; write address to zeropage. was modified by html-parsing
     lda #<screen_prep
