@@ -3,8 +3,7 @@
 
   !source <6502/std.a>    ; for +bit16
   !source <6502/opcodes.a>  ; for AND/ORA self-mods
-  !source <cbm/c128/kernal.a> ; for k_primm
-  !source "./src/vdclib.asm"  ; macros and code parts
+  !source "src/vdclib.asm"  ; macros and code parts
 
 ;build params
 release_vdl = 0
@@ -258,7 +257,7 @@ complex_instruction_parse3args
 
 ; sibbling to complex_instruction_block_entry. for all instructions without repeat support
 complex_instruction_shared_entry ; read args (uint16, uint16, uint16), remember CR, activate full RAM with I/O
-    jsr complex_instruction_parse3args
+;    jsr complex_instruction_parse3args
     jmp remember_mem_conf
 
 ; sibbling to complex_instruction_shared_entry. for all instructions that support repeats
@@ -850,32 +849,8 @@ reset_vdc_registers
 ; todo: check all parameter values that are passed to VMC_execute.
 ;       and compare them to the basic execution to print text
 vmp
-    ;parse target address (where to render the text to)
-    jsr b_parse_uint16
-    sty arg_address
-    sta arg_address + 1
 
-    ;parse location and length of string (location in bank 1)
-    jsr b_skip_comma
-
-    ;bank 15
-    lda #15
-    sta $2
-    ;address HB/LB
-    lda #>b_parse_string ;$877b
-    sta $3
-    lda #<b_parse_string
-    sta $4
-    jsr $02cd ;jsrfar
-
-    ;$877b writes string address to $24/$25
-    
-    ; prepare for indirect FETCH
-    lda #$24
-    sta $02aa
-
-    ;$877b writes string length to A, which is stored to $6 by JSRFAR
-    lda $6
+    lda #39
     sta vmp_length
 
     ;arg3(count16) is not changed in VMC, so we can set it here already
@@ -905,14 +880,8 @@ vmp
     ;lda (arg2),y   ;not this. we need to use FETCH
 .vmp_next_character
     ldy offset_1
-    ldx #$7f        ;bank 1
-    jsr k_fetch
+    lda (address_vram),y
     inc offset_1
-
-    ;  calculate offset of character in charset
-    ; sub 32 from offset. quick and dirty.
-    sec
-    sbc #31
 
     tax
 
@@ -966,7 +935,7 @@ vmp
 
 ; VCS: VDC Charset Set - sets the parameters for the VMP command. these settings stick, so they don't need to be given for each VMP call
 vcs
-    jsr complex_instruction_parse3args
+    ;jsr complex_instruction_parse3args
 
     ;parse address of the charset in vram.
     lda arg1

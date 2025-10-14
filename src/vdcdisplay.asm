@@ -3,6 +3,8 @@ setupBitmapMode
     
     rts
 
+;x contains the column
+;lineNr the textline (1-25)
 displayPage
     ; write address to zeropage. was modified by html-parsing
     lda #<screen_prep
@@ -14,44 +16,44 @@ displayPage
     sta screensize
     lda #$3
     sta screensize+1
-
-    lda #147      ; clear screen
-    jsr bsout
-
-    lda #$d ;cr - go to second line for output (first line is for user input and feedback)
-    jsr bsout
     
-    lda #39
-    sta colcount
+    lda #0
+    sta offset_vram
+    tay
+    tax
 
+-   ldy offset_vram
+    lda (address_vram),y
+    ;convert to charset entry
+    sec
+    sbc #32
+    pha
+    
+    ;vmp takes y as HB, a as LB of destination-address
     ldy #0
-
--   lda (address_vram),y
-    jsr bsout
+    txa
+    jsr vmp
 
     dec screensize
     bne +
     dec screensize+1
     bmi ++
 
-+   dec colcount
++   inx
+    cpx #39
     bne +
     ; colcount reached, do linebreak
-    lda #$d
-    jsr bsout
-    lda #27
-    jsr bsout
-    lda #'J'
-    jsr bsout
-    lda #39
-    sta colcount
+    ldx #0
 
-+   iny
++   inc offset_vram
     bne -
     inc address_vram+1
     jmp -
 
 ++  rts
 
-colcount   !byte 39
+lineNr  !byte 0
+;colcount   !byte 0
 screensize !word 960
+
+!source "src/vdcbasic.asm"
