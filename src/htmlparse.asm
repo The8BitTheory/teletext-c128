@@ -186,25 +186,25 @@ parseTagImg
     bne -
 
     cmp #'s'    ;separated graphics?
-    bne .separateGraphics       ;not S means it's already a color. handle accordingly
+    beq .separateGraphics       ;not S means it's already a color. handle accordingly
     
     lda #128
     sta graphicsOffset
-    jsr readNextByte
     jmp +
 
 .separateGraphics
     lda #192
     sta graphicsOffset
+    jsr readNextByte
 
 ; skip over color parsing.
 ; is redundant to parent span. saves us a lot of work
 ; skipUntilDigit works b/c graphic characters are uniquely different to colors (0x20 to 0x7f)
-    jsr skipUntilDigit
++    jsr skipUntilDigit
 ;+   jsr parseColor  ; stores foregroundcolor. A contains next byte (after color) after this
 
     ; parse graphic character (from 0x20 to 0x7f or so)
-+   jsr parseGraphicCharacter
+    jsr parseGraphicCharacter
 
     jsr outputCharacter
 

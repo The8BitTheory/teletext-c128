@@ -40,7 +40,7 @@ address_vram = $fd
 init:
     jsr k_primm
 !pet "Detecting and querying firmware",0
-    jsr detectAndFirmware
+    jmp detectAndFirmware
 
 
 main:
