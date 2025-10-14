@@ -1,7 +1,5 @@
 ;the following is 6502 assembly, using the acme syntax
 
-address_html = $fb
-address_vram = $fd
 
 ; ------------------
 ; ard-text
@@ -17,14 +15,22 @@ address_vram = $fd
 
 parseHtml
     ldy #0
-;    sty eof
-    sty current_tag
     sty screenline
     sty screencol
     sty offset_html
     sty offset_html+1
     sty offset_vram
     sty offset_vram+1
+
+; clear the vram output area
+    lda #0
+    tax
+-   sta screen_prep,x
+    sta screen_prep+$100,x
+    sta screen_prep+$200,x
+    sta screen_prep+$300,x
+    inx
+    bne -
 
 ;parse the first character
 findNextTag
@@ -44,11 +50,17 @@ findNextTag
     cmp #13
     beq findNextTag
 
-+   jsr bsout;jsr outputCharacter ; if a regular character is found, put it on the screen
++   jsr outputCharacter ; if a regular character is found, put it on the screen
 
     jmp findNextTag
 
 outputCharacter
+    cmp #32         ;smaller than 32, skip
+    bcc ++
+
+;    cmp #128    ;larger than 127, skip
+;    bcs ++
+
     pha
 
     ldy offset_vram    
@@ -73,7 +85,8 @@ outputCharacter
     inc address_vram+1
 
 +   pla
-    jmp bsout
+++  rts
+    ;jmp bsout
 
 parseTag:
     jsr readNextByte
@@ -85,9 +98,7 @@ parseTag:
     bne +
     jmp parseEndTag
 
-+   sta current_tag
-
-    cmp #'d';
++   cmp #'d';
     bne +
     jmp parseTagDiv
 
@@ -195,7 +206,7 @@ parseTagImg
     ; parse graphic character (from 0x20 to 0x7f or so)
 +   jsr parseGraphicCharacter
 
-    jsr bsout;outputCharacter
+    jsr outputCharacter
 
     ; skip until '>'
     jsr skipUntilTagEnd
@@ -492,8 +503,8 @@ readNextByte
     ldx #1
     jmp readDone
 
-    ldy offset_html
-+   lda (address_html),y
++   ldy offset_html
+    lda (address_html),y
     
     iny
     sty offset_html
@@ -511,9 +522,8 @@ readDone
     
 screen_line_offsets !word 0,80,160,240,320,400,480,560,640,720,800,880,960,1040,1120,1200,1280,1360,1440,1520,1600,1680,1760,1840,1920
 
-color_fg    !byte 0
+color_fg    !byte $f
 color_bg    !byte 0
-current_tag !byte 0
 skip_until  !byte 0
 offset_html !word 0
 offset_vram !word 0

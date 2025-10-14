@@ -8,6 +8,10 @@ k_getin = $eeeb
 ;strout = $B47C
 bsout = $ffd2
 
+address_html = $fb
+address_vram = $fd
+
+
 ;data_response = $2400
 
 ; -- parsing only text, skipping over graphic characters (textmode)
@@ -56,18 +60,17 @@ requestPage:
     bne error
 
     lda #<data_response
-    sta $fb
+    sta address_html
     lda #>data_response
-    sta $fc
+    sta address_html+1
 
     lda #<screen_prep
-    sta $fd
+    sta address_vram
     lda #>screen_prep
-    sta $fe
+    sta address_vram+1
 
-    lda #147      ; clear screen
-    jsr bsout
     jsr parseHtml
+    jsr displayPage
 
     jmp handleInputClear
 
@@ -191,7 +194,11 @@ minInput        !byte '1','0','0'
 !source "src/htmlparse.asm"
 !source "src/vdcdisplay.asm"
 
-screen_prep = *
+;$24c7 - 9415
 
-data_response = *+2048
+
+screen_prep !byte 0
+
+;$2cc7 - 11463
+data_response = screen_prep+2048
 
