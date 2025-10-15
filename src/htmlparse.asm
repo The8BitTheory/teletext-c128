@@ -188,12 +188,12 @@ parseTagImg
     cmp #'s'    ;separated graphics?
     beq .separateGraphics       ;not S means it's already a color. handle accordingly
     
-    lda #128
+    lda #160
     sta graphicsOffset
     jmp +
 
 .separateGraphics
-    lda #192
+    lda #224
     sta graphicsOffset
     jsr readNextByte
 
