@@ -21,6 +21,7 @@ parseHtml
     sty offset_html+1
     sty offset_vram
     sty offset_vram+1
+    sty current_color
 
 ; clear the vram output area
     lda #$20
@@ -71,7 +72,7 @@ outputCharacter
     adc #4
     sta address_vram+1
 
-    lda color_fg
+    lda current_color
     sta (address_vram),y
 
     lda address_vram+1
@@ -157,6 +158,13 @@ skipUntilTagEnd:
     jsr skipUntilCharacter
     rts
 
+skipNrCharacters
+-   jsr readNextByte
+    dec skip_until
+    bne -
+    rts
+
+
 skipUntilDigit:
     jsr readNextByte
 
@@ -181,9 +189,7 @@ parseTagImg
     ; skip <img src='./img/g1b' -> 17 characters
     lda #17
     sta skip_until
--   jsr readNextByte
-    dec skip_until
-    bne -
+    jsr skipNrCharacters
 
     cmp #'s'    ;separated graphics?
     beq .separateGraphics       ;not S means it's already a color. handle accordingly
@@ -284,36 +290,38 @@ parseGraphicCharacter
 ; b=black   #66
 ; bl=blue   #66,#76 -> 142
 
-parseColor
+; higher nybble: foreground
+; lower nybble: background
+parseColorIntoX
     cmp #'w'
     bne +
-    lda #$f
-    bne setForegroundColor
+    ldx #$f
+    bne parseColorDone
 
 +   cmp #'y'
     bne +
-    lda #$d
-    bne setForegroundColor
+    ldx #$d
+    bne parseColorDone
 
 +   cmp #'m'
     bne +
-    lda #$b
-    bne setForegroundColor
+    ldx #$b
+    bne parseColorDone
 
 +   cmp #'c'
     bne +
-    lda #$7
-    bne setForegroundColor
+    ldx #$7
+    bne parseColorDone
 
 +   cmp #'r'
     bne +
-    lda #$8
-    bne setForegroundColor
+    ldx #$8
+    bne parseColorDone
 
 +   cmp #'g'
     bne +
-    lda #$4
-    bne setForegroundColor
+    ldx #$4
+    bne parseColorDone
 
 +   cmp #'b'
     bne invalidColor
@@ -323,26 +331,22 @@ parseColor
     cmp #'l'
     beq setBlue
     
-    pha ;push value to stack
     bne setBlack
 
 invalidColor
-    lda #$e
-    bne setForegroundColor
+    ldx #$e
+    bne parseColorDone
 
 setBlue
     jsr readNextByte
-    pha
 
-    lda #$2
-    bne setForegroundColor
+    ldx #$2
+    bne parseColorDone
 
 setBlack
-    lda #$0
+    ldx #$0
 
-setForegroundColor
-    sta color_fg
-    pla
+parseColorDone
     rts
     
 
@@ -364,6 +368,50 @@ beginningOfNextLine
     rts
 
 parseTagSpan
+    ; skip until class attribute (which currently always comes first)
+    lda #'c'
+    sta skip_until
+    jsr skipUntilCharacter
+
+    lda #9
+    sta skip_until
+    jsr skipNrCharacters
+    
+    ; foreground color first
+    jsr parseColorIntoX
+    txa
+    asl
+    asl
+    asl
+    asl
+    
+    ;clear upper nybble of current_color, so we can OR cleanly
+    tax
+
+    lda current_color
+    and #%00001111
+    sta current_color
+
+    txa
+    ora current_color
+    sta current_color
+
+    lda #'g'
+    sta skip_until
+    jsr skipUntilCharacter
+
+    jsr readNextByte
+
+    jsr parseColorIntoX
+    
+    lda current_color
+    and #%11110000
+    sta current_color
+    
+    txa
+    ora current_color
+    sta current_color
+    
     jsr skipUntilTagEnd
     jmp findNextTag
 
@@ -522,16 +570,15 @@ readDone
     
 screen_line_offsets !word 0,80,160,240,320,400,480,560,640,720,800,880,960,1040,1120,1200,1280,1360,1440,1520,1600,1680,1760,1840,1920
 
-color_fg    !byte $f
-color_bg    !byte 0
-skip_until  !byte 0
-offset_html !word 0
-offset_vram !word 0
-screenline  !byte 0
-screencol   !byte 0
-eof         !byte 0
-graphicsOffset !byte 0
-currentChar !byte 0
+current_color   !byte $f
+skip_until      !byte 0
+offset_html     !word 0
+offset_vram     !word 0
+screenline      !byte 0
+screencol       !byte 0
+eof             !byte 0
+graphicsOffset  !byte 0
+currentChar     !byte 0
 
 ; ARD colors
 ; w=white   #87
