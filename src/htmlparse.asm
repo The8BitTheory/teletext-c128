@@ -289,6 +289,14 @@ parseGraphicCharacter
 ; g=green   #71
 ; b=black   #66
 ; bl=blue   #66,#76 -> 142
+; $77/119    cmp #'w' #$f
+; $79/121   cmp #'y' #$d
+; $6d/109   cmp #'m' #$b
+; $63/99   cmp #'c' #$7
+; $72/114   cmp #'r' #$8
+; $67/103   cmp #'g' #$4
+; $62/98  'b' #$0
+;          'bl'   #$2
 
 ; higher nybble: foreground
 ; lower nybble: background
@@ -456,6 +464,12 @@ parseSpecialCharacter:
     beq +
     rts
 
+; we found an ampersand again. not a valid sequence. just print ampersand
++   cmp #'&'
+    bne +
+    jsr outputCharacter
+    jmp parseSpecialCharacter
+
 +   cmp #'n' ; n
     bne +
     lda #' '
@@ -506,10 +520,9 @@ parseSpecialCharacter:
     lda #'<'
     jmp doneSpecialCharacterHandling
 
-;   no known sequence. just skip
-+   lda #$3b ; ;
-    sta skip_until
-    jmp skipUntilCharacter
+;   no known sequence. just output regularly
+    clc
++   rts
 
 
 doneSpecialCharacterHandling
