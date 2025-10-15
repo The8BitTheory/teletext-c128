@@ -32,7 +32,7 @@ address_vram = $fd
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $2000
+*= $2400
 
     jmp main
     jmp getIp
@@ -44,6 +44,10 @@ init:
 
 
 main:
+    sta input
+    stx input+1
+    sty input+2
+
 ; disable basic rom. bank 0, kernal and I/O enabled
     lda #%00001110
     sta $ff00
