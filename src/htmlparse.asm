@@ -23,7 +23,7 @@ parseHtml
     sty offset_vram+1
 
 ; clear the vram output area
-    lda #0
+    lda #$20
     tax
 -   sta screen_prep,x
     sta screen_prep+$100,x
