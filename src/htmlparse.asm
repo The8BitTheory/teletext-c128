@@ -415,37 +415,37 @@ parseSpecialCharacter:
 
 +   cmp #'a' ; a
     bne +
-    ;lda 'ä'
+    lda #99+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'A' ; A
     bne +
-    ;lda 'Ä'
+    lda #96+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'o' ; o
     bne +
-    ;lda 'ö'
+    lda #100+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'O' ; O
     bne +
-    ;lda 'Ö'
+    lda #97+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'u' ; u
     bne +
-    ;lda 'ü'
+    lda #101+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'U' ; U
     bne +
-    ;lda 'Ü'
+    lda #98+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'s' ; s
     bne +
-    ;lda 'ß'
+    lda #102+32
     jmp doneSpecialCharacterHandling
 
 +   cmp #'g' ; g
