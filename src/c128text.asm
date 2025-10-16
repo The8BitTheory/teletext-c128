@@ -63,11 +63,14 @@ endOfProgram
 
 getIp
     jsr k_primm
-!pet "Querying IP",0
+!pet "Querying IP",$d,0
 
     +wic64_execute request, response        ; send request and receive the response
-    bcs timeout                             ; carry set => timeout occurred
-    bne error                               ; zero flag clear => error status code in accumulator
+    bcc +
+    dec timeoutRetry
+    beq timeout
+    bne getIp                             ; carry set => timeout occurred
++   bne error                               ; zero flag clear => error status code in accumulator
     
     lda response
     beq +
@@ -105,6 +108,8 @@ requestPage:
 timeout:
     jsr k_primm
     !pet "?timeout error", $00
+    lda #3
+    sta timeoutRetry
     rts
 
 error:
@@ -114,7 +119,9 @@ error:
 
     jsr k_primm
 ; reserve 40 bytes of memory for the status message
-status_response: !fill 40, 0
+status_response: !fill 40,$ea
+    jsr k_primm
+    !byte $d,$0
     rts
 
 detectAndFirmware
@@ -197,6 +204,7 @@ orf_url_size = * - orf_url
 
 digit           !byte 0
 minInput        !byte '1','0','0'
+timeoutRetry    !byte 3
 
 ; include the actual wic64 routines
 !source "wic64.asm"

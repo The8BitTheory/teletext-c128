@@ -3,3 +3,5 @@
 *.bin
 *.dasm
 /build
+*.reu
+*.crdownload
