@@ -51,13 +51,15 @@ findNextTag
     cmp #13
     beq findNextTag
 
-+   jsr outputCharacter ; if a regular character is found, put it on the screen
++   jsr outputCharacterAlpha ; if a regular character is found, put it on the screen
 
     jmp findNextTag
 
+outputCharacterAlpha
+     cmp #32         ;smaller than 32, skip
+     bcc ++
+
 outputCharacter
-    cmp #32         ;smaller than 32, skip
-    bcc ++
 
 ;    cmp #128    ;larger than 127, skip
 ;    bcs ++
@@ -129,6 +131,10 @@ parseTag:
 +   cmp #'i'
     bne +
     jmp parseTagImg
+
++   cmp #'f'
+    bne +
+    jmp parseTagFont
 
     ;ignore all other tags and go until the end
 +   jsr skipUntilTagEnd
@@ -356,7 +362,10 @@ setBlack
 
 parseColorDone
     rts
-    
+
+parseTagFont
+    jsr skipUntilTagEnd
+    jmp findNextTag    
 
 parseTagNobr
     jsr skipUntilTagEnd ; skip until <nobr> is complete

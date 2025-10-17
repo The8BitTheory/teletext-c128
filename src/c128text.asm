@@ -87,7 +87,7 @@ response: !fill 16, $ea
 +   rts
 
 requestPage:
-    +wic64_execute orf_request, data_response
+    +wic64_execute orf_request, data_response, 5
     bcc +           ; carry set means timeout. carry clear = no timeout
     dec timeoutRetry
     beq timeout
