@@ -66,10 +66,10 @@ getIp
 !pet "Querying IP",$d,0
 
     +wic64_execute request, response        ; send request and receive the response
-    bcc +
+    bcc +                   ; carry set means timeout. carry clear = no timeout
     dec timeoutRetry
     beq timeout
-    bne getIp                             ; carry set => timeout occurred
+    jmp getIp                             ; carry set => timeout occurred
 +   bne error                               ; zero flag clear => error status code in accumulator
     
     lda response
@@ -88,8 +88,12 @@ response: !fill 16, $ea
 
 requestPage:
     +wic64_execute orf_request, data_response
-    bcs timeout
-    bne error
+    bcc +           ; carry set means timeout. carry clear = no timeout
+    dec timeoutRetry
+    beq timeout
+    jmp requestPage
+
++   bne error
 
     lda #<data_response
     sta address_html
