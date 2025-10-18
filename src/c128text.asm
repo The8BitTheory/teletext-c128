@@ -35,7 +35,7 @@ address_vram = $fd
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $2500
+*= $2600
 
     jmp main
     jmp getIp
@@ -64,7 +64,44 @@ main:
     lda #%00001110
     sta $ff00
 
-    jsr requestPage
+    ; if first digit of input has bit7 set, we request the nav-data of the page, not the page itself
+    lda input
+    bmi +
+    +wic64_execute txt_request, data_response, 5
+    jmp ++
+
+; write page string to request-url
++   and #%01111111  ; remove highest bit, leaves us with a valid page number
+    sta input
+    sta nav_page
+
+    ldx #2
+-   lda input,x
+    sta nav_page,x
+    dex
+    bne -
+
+    +wic64_execute nav_request, data_response, 5
+    lda input
+    ora #%10000000  ; restore value so we can check it again later
+    sta input
+
+++  jsr handleResponse
+
+    lda input
+    bpl +
+    jmp parseNav
+
++   jsr parseHtml
+
+    ; response Size is needed so we can save to disk. 
+    ;  only interesting for page, not for nav. so we only write it in this branch
+    lda responseSize
+    sta address_html
+    lda responseSize+1
+    sta address_html+1
+
+    rts
 
 endOfProgram
     lda #%00000000
@@ -93,17 +130,15 @@ response: !fill 16, $ea
     
     lda #$0d
     jsr bsout
-    ;lda #$0a
-    ;jsr bsout
 
 +   rts
 
-requestPage:
-    +wic64_execute txt_request, data_response, 5
+handleResponse:
+    
     bcc +           ; carry set means timeout. carry clear = no timeout
     dec timeoutRetry
     beq timeout
-    jmp requestPage
+    jmp handleResponse
 
 +   bne error
 
@@ -122,16 +157,8 @@ requestPage:
     lda #>screen_prep
     sta address_vram+1
 
-    jsr parseHtml
-
-    lda responseSize
-    sta address_html
-    lda responseSize+1
-    sta address_html+1
-
     rts
 
-;    jmp handleInputClear
 
 timeout:
     jsr k_primm
@@ -150,6 +177,8 @@ error:
 status_response: !fill 40,$ea
     jsr k_primm
     !byte $d,$0
+
+    jmp clearResponseSize
 
     rts
 
@@ -176,48 +205,11 @@ legacy_firmware:
     !pet "?legacy firmware error", $00
     rts
 
-handleInputClear
-    lda #19 ;home
-    jsr bsout
-
-handleInput
-    jsr k_getin
-    ldx digit
-    cmp minInput,x ; first digit needs to be 1-9, 2nd and 3rd can be 0-9
-    bcc handleInput
-    cmp #'9'+1
-    bcc evalInput
-    cmp #'X'
-    bne handleInput
-    jmp endOfProgram
-
-evalInput
-    ;store digit to input
-    ldx digit
-    sta input,x
-    ; increase digit
-    inc digit
-
-    jsr bsout
-
-    ; if max digit reached (3rd digit), bring cursor to start of line and do request
-    ldx digit
-    cpx #3
-    bne handleInput
-
-    ldx #0
-    stx digit
-    lda #$d
-    jsr bsout
-;    lda #27
-;    jsr bsout
-;    lda #'J'
-;    jsr bsout
-    lda #147      ; clear screen
-    jsr bsout
-
-    jmp requestPage
-
+clearResponseSize
+    lda #0
+    sta address_html
+    sta address_html+1
+    rts
 
 ; define request to get the current ip address
 request !byte "R", WIC64_GET_IP, $00, $00
@@ -226,10 +218,18 @@ request !byte "R", WIC64_GET_IP, $00, $00
 status_request: !byte "R", WIC64_GET_STATUS_MESSAGE, $01, $00, $01
 
 txt_request:    !byte "R",WIC64_HTTP_GET, <txt_url_size, >txt_url_size
-;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
 txt_url:        !text "https://www.ard-text.de/page_only.php?page="
 input           !text '1','0','0'
 txt_url_size = * - txt_url
+
+nav_request:    !byte "R",WIC64_HTTP_GET, <nav_url_size, >nav_url_size
+nav_url:        !text "https://www.ard-text.de/nav_only.php?page="
+nav_page        !byte 0,0,0
+nav_url_size = * - nav_url
+
+;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
+
+
 
 time_request    !byte "R", WIC64_GET_LOCAL_TIME, $00, $00
 time_response   !fill 20,0
@@ -243,7 +243,7 @@ responseSize    !word 0
 
 ; include the actual wic64 routines
 !source "wic64.asm"
-!source "src/htmlparse.asm"
+!source "src/htmlparse_ard.asm"
 
 
 ;$24c7 - 9415

@@ -14,24 +14,7 @@
 
 
 parseHtml
-    ldy #0
-    sty screenline
-    sty screencol
-    sty offset_html
-    sty offset_html+1
-    sty offset_vram
-    sty offset_vram+1
-    sty current_color
-
-; clear the vram output area
-    lda #$20
-    tax
--   sta screen_prep,x
-    sta screen_prep+$100,x
-    sta screen_prep+$200,x
-    sta screen_prep+$300,x
-    inx
-    bne -
+    jsr initMemory
 
 ;parse the first character
 findNextTag
@@ -588,7 +571,31 @@ readDone
     stx eof
     rts
 
+parseNav
 
+    rts
+
+initMemory
+    ldy #0
+    sty screenline
+    sty screencol
+    sty offset_html
+    sty offset_html+1
+    sty offset_vram
+    sty offset_vram+1
+    sty current_color
+
+; clear the vram output area
+    lda #$20
+    tax
+-   sta screen_prep,x
+    sta screen_prep+$100,x
+    sta screen_prep+$200,x
+    sta screen_prep+$300,x
+    inx
+    bne -
+
+    rts
     
 screen_line_offsets !word 0,40,80,120,160,200,240,280,320,360,400,440,480,520,560,600,640,680,720,760,800,840,880,920,960
 
