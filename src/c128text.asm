@@ -60,6 +60,8 @@ main:
     stx input+1
     sty input+2
 
+    jsr clearResponseSize
+
 ; disable basic rom. bank 0, kernal and I/O enabled
     lda #%00001110
     sta $ff00
@@ -91,13 +93,13 @@ main:
 
     lda input
     bpl +
-    jmp parseNav
+    jsr parseNav
+    jmp ++
 
 +   jsr parseHtml
 
     ; response Size is needed so we can save to disk. 
-    ;  only interesting for page, not for nav. so we only write it in this branch
-    lda responseSize
+++  lda responseSize
     sta address_html
     lda responseSize+1
     sta address_html+1

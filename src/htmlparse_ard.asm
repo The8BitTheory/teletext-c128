@@ -165,6 +165,52 @@ skipUntilDigit:
 
 +   rts
 
+findDivSubpageCounter:
+    jsr readNextByte
+    cmp #'<'
+    bne findDivSubpageCounter
+
+    jsr readNextByte
+    cmp #'d'
+    bne findDivSubpageCounter
+
+    ;we are in a div tag now. skip the 'iv '
+    lda #3
+    sta skip_until
+    jsr skipNrCharacters
+
+startComparing
+    ldx #0
+    stx find_comp_index
+keepComparing
+    jsr readNextByte
+    ldx find_comp_index
+    cmp find_subpageCounter,x
+    beq nextChar        ; match. keep comparing
+    
+    cmp #'>'    ;check if we hit the end of the tag. if so. search for next div-tag
+    beq findDivSubpageCounter
+
+    ; end tag not yet hit, compare with first character again
+    bne startComparing
+    
+nextChar
+    inx
+    stx find_comp_index
+    cpx #find_subpageCounter_length-1
+    bne keepComparing
+
+;found a match. skip to '>' and then read the content until '<'
+    jsr skipUntilTagEnd
+
+-   jsr readNextByte
+    cmp #'<'
+    beq +
+    jsr outputCharacterAlpha
+    jmp -
+
++   rts
+
 parseTagLink:
     jsr skipUntilTagEnd
     jmp findNextTag
@@ -512,6 +558,11 @@ parseSpecialCharacter:
     lda #'<'
     jmp doneSpecialCharacterHandling
 
++   cmp #'d' ; &deg; degrees
+    bne +
+    lda #103+32
+    jmp doneSpecialCharacterHandling
+
 ;   no known sequence. just output regularly
     clc
 +   rts
@@ -572,8 +623,8 @@ readDone
     rts
 
 parseNav
-
-    rts
+    jsr initMemory
+    jmp findDivSubpageCounter
 
 initMemory
     ldy #0
@@ -599,6 +650,9 @@ initMemory
     
 screen_line_offsets !word 0,40,80,120,160,200,240,280,320,360,400,440,480,520,560,600,640,680,720,760,800,840,880,920,960
 
+find_subpageCounter !text "class=\"subpageCounter\""
+find_subpageCounter_length = *-find_subpageCounter
+
 current_color   !byte $f
 skip_until      !byte 0
 offset_html     !word 0
@@ -608,6 +662,7 @@ screencol       !byte 0
 eof             !byte 0
 graphicsOffset  !byte 0
 currentChar     !byte 0
+find_comp_index !byte 0
 
 ; ARD colors
 ; w=white   #87
