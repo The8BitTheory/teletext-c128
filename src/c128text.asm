@@ -32,14 +32,14 @@ address_vram = $fd
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $2400
+*= $2500
 
     jmp main
     jmp getIp
 
 init:
     jsr k_primm
-!pet "Detecting and querying firmware",0
+!pet "Detecting and querying firmware",$d,$0
     jmp detectAndFirmware
 
 
@@ -65,14 +65,15 @@ getIp
     jsr k_primm
 !pet "Querying IP",$d,0
 
-    +wic64_execute request, response        ; send request and receive the response
+    +wic64_execute request, response, 5        ; send request and receive the response
     bcc +                   ; carry set means timeout. carry clear = no timeout
     dec timeoutRetry
     beq timeout
     jmp getIp                             ; carry set => timeout occurred
-+   bne error                               ; zero flag clear => error status code in accumulator
++   beq +
+    jmp error                               ; zero flag clear => error status code in accumulator
     
-    lda response
++   lda response
     beq +
 
     jsr k_primm
@@ -95,6 +96,11 @@ requestPage:
 
 +   bne error
 
+    lda wic64_response_size
+    sta responseSize
+    lda wic64_response_size+1
+    sta responseSize+1
+
     lda #<data_response
     sta address_html
     lda #>data_response
@@ -105,7 +111,14 @@ requestPage:
     lda #>screen_prep
     sta address_vram+1
 
-    jmp parseHtml
+    jsr parseHtml
+
+    lda responseSize
+    sta $fb
+    lda responseSize+1
+    sta $fc
+
+    rts
 
 ;    jmp handleInputClear
 
@@ -126,6 +139,7 @@ error:
 status_response: !fill 40,$ea
     jsr k_primm
     !byte $d,$0
+
     rts
 
 detectAndFirmware
@@ -209,6 +223,9 @@ orf_url_size = * - orf_url
 digit           !byte 0
 minInput        !byte '1','0','0'
 timeoutRetry    !byte 3
+
+; temp storage. will be written to $fb/$fc upon completion
+responseSize    !word 0
 
 ; include the actual wic64 routines
 !source "wic64.asm"
