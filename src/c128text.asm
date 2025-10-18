@@ -1,4 +1,7 @@
 ; include the wic64 header file containing the macro definitions
+wic64_include_enter_portal = 0
+wic64_include_load_and_run = 0
+wic64_optimize_for_size = 1
 
 !source "wic64.h"
 
@@ -40,7 +43,16 @@ address_vram = $fd
 init:
     jsr k_primm
 !pet "Detecting and querying firmware",$d,$0
-    jmp detectAndFirmware
+    jsr detectAndFirmware
+
+    +wic64_execute time_request, time_response, 5
+
+    lda #<time_response
+    sta address_html
+    lda #>time_response
+    sta address_html+1
+
+    rts
 
 
 main:
@@ -51,7 +63,6 @@ main:
 ; disable basic rom. bank 0, kernal and I/O enabled
     lda #%00001110
     sta $ff00
-
 
     jsr requestPage
 
@@ -88,7 +99,7 @@ response: !fill 16, $ea
 +   rts
 
 requestPage:
-    +wic64_execute orf_request, data_response, 5
+    +wic64_execute txt_request, data_response, 5
     bcc +           ; carry set means timeout. carry clear = no timeout
     dec timeoutRetry
     beq timeout
@@ -114,9 +125,9 @@ requestPage:
     jsr parseHtml
 
     lda responseSize
-    sta $fb
+    sta address_html
     lda responseSize+1
-    sta $fc
+    sta address_html+1
 
     rts
 
@@ -214,11 +225,14 @@ request !byte "R", WIC64_GET_IP, $00, $00
 ; define the request for the status message
 status_request: !byte "R", WIC64_GET_STATUS_MESSAGE, $01, $00, $01
 
-orf_request:    !byte "R",WIC64_HTTP_GET, <orf_url_size, >orf_url_size
+txt_request:    !byte "R",WIC64_HTTP_GET, <txt_url_size, >txt_url_size
 ;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
-orf_url:        !text "https://www.ard-text.de/page_only.php?page="
+txt_url:        !text "https://www.ard-text.de/page_only.php?page="
 input           !text '1','0','0'
-orf_url_size = * - orf_url
+txt_url_size = * - txt_url
+
+time_request    !byte "R", WIC64_GET_LOCAL_TIME, $00, $00
+time_response   !fill 20,0
 
 digit           !byte 0
 minInput        !byte '1','0','0'
