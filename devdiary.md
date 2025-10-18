@@ -19,3 +19,12 @@ Working on graphical screen output (instead of just bsout)
 Input Handling (now from the Basic side)
 Adding colors
 
+## Day 5
+NTSC register settings
+Fixed separated graphic characters
+
+## Day 6
+Saving Pages (in HTML format) to disk
+
+## Day 7
+Showing Subpage Information in top row (download and parse nav_only.php)
