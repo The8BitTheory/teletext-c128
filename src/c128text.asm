@@ -82,10 +82,11 @@ main:
     bne -
 
     +wic64_execute nav_request, data_response, 5
+    pha
     lda input
     ora #%10000000  ; restore value so we can check it again later
     sta input
-
+    pla
 ++  jsr handleResponse
 
     lda input
