@@ -563,6 +563,11 @@ parseSpecialCharacter:
     lda #103+32
     jmp doneSpecialCharacterHandling
 
++   cmp #'q'    ; &quot; quotation mark
+    bne +
+    lda #2+32
+    jmp doneSpecialCharacterHandling
+
 ;   no known sequence. just output regularly
     clc
 +   rts
