@@ -5,6 +5,12 @@ wic64_optimize_for_size = 1
 
 !source "wic64.h"
 
+chrget = $0380
+chrgot = $0386
+
+b_skip_comma      = $795c ; if comma: skip, otherwise: syntax error
+b_parse_uint8_to_X    = $87f4 ; read unsigned 8-bit value to X
+
 k_primm = $ff7d
 k_getin = $eeeb
 ;k_pokebank = $02af  ;.a=value to write, .x=bank, .y=offset from address in $02b9
@@ -60,7 +66,19 @@ main:
     stx input+1
     sty input+2
 
-    jsr clearResponseSize
+    ; do we have more parameters? ie the subpage
+    jsr chrgot
+    beq +
+
+    jsr b_skip_comma
+    jsr b_parse_uint8_to_X
+    stx txt_subinput
+
+    jsr b_skip_comma
+    jsr b_parse_uint8_to_X
+    stx txt_subinput+1
+
++   jsr clearResponseSize
 
 ; disable basic rom. bank 0, kernal and I/O enabled
     lda #%00001110
@@ -223,6 +241,8 @@ status_request: !byte "R", WIC64_GET_STATUS_MESSAGE, $01, $00, $01
 txt_request:    !byte "R",WIC64_HTTP_GET, <txt_url_size, >txt_url_size
 txt_url:        !text "https://www.ard-text.de/page_only.php?page="
 input           !text '1','0','0'
+txt_suburl      !text "&sub="
+txt_subinput    !text '0','1'
 txt_url_size = * - txt_url
 
 nav_request:    !byte "R",WIC64_HTTP_GET, <nav_url_size, >nav_url_size
