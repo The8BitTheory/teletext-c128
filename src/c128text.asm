@@ -73,10 +73,12 @@ main:
     jsr b_skip_comma
     jsr b_parse_uint8_to_X
     stx txt_subinput
+    stx nav_subinput
 
     jsr b_skip_comma
     jsr b_parse_uint8_to_X
     stx txt_subinput+1
+    stx nav_subinput+1
 
 +   jsr clearResponseSize
 
@@ -248,6 +250,8 @@ txt_url_size = * - txt_url
 nav_request:    !byte "R",WIC64_HTTP_GET, <nav_url_size, >nav_url_size
 nav_url:        !text "https://www.ard-text.de/nav_only.php?page="
 nav_page        !byte 0,0,0
+nav_suburl      !text "&sub="
+nav_subinput    !text '0','1'
 nav_url_size = * - nav_url
 
 ;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
