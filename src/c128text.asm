@@ -45,6 +45,8 @@ address_vram = $fd
 
     jmp main
     jmp getIp
+    jmp init
+    jmp createQr
 
 init:
     jsr k_primm
@@ -234,6 +236,14 @@ clearResponseSize
     sta address_html+1
     rts
 
+createQr
+; disable basic rom. bank 0, kernal and I/O enabled
+    lda #%00001110
+    sta $ff00
+    jsr startQrCodeGenerator
+
+    jmp endOfProgram
+
 ; define request to get the current ip address
 request !byte "R", WIC64_GET_IP, $00, $00
 
@@ -254,6 +264,10 @@ nav_suburl      !text "&sub="
 nav_subinput    !text '0','1'
 nav_url_size = * - nav_url
 
+qr_url          !text "https://www.ard-text.de/index.php?page="
+qr_page         !byte 1,0,0
+qr_url_length = *-qr_url
+
 ;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
 
 
@@ -271,7 +285,7 @@ responseSize    !word 0
 ; include the actual wic64 routines
 !source "wic64.asm"
 !source "src/htmlparse_ard.asm"
-
+!source "src/qr.asm"
 
 ;$24c7 - 9415
 

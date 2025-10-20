@@ -1,0 +1,144 @@
+﻿; this renders the qr-code to a 64-pixel wide vic-iv sprite.
+; z_location contains the pointer to read from
+; z_location2 is the pointer to write the sprite pixels to.
+; 
+
+renderspr
+
+!zone render
+z_sprite_bit    = z_counter1
+z_sprite_byte   = z_counter1+1
+z_sprite_offset = z_counter2
+
+    jsr set_location_to_data
+    ldy #0                    ;y holds the column (reset to zero after eol is reached)
+    sty z_sprite_offset
+    ; z_location2 will hold the value of spriteOut times 64l
+    sty z_location2
+    sty z_location2+1
+    
+    lda #%00100000
+    jsr .reset_sprite_byte
+
+    ;calculate pixel output address. comes after data (same as datastream location in previous steps)
+    ; m_l3: store z_location2 for later return to caller. current value will be changed.
+
+    clc
+    lda #<data
+    adc matrixSize
+    sta z_location2
+    sta m_l3
+    
+    lda #>data
+    adc matrixSize+1
+    sta z_location2+1
+    sta m_l3+1
+
+    
+    ;clear memory area
+    lda #0
+    ldy #0
+-   sta (z_location2),y
+    dey
+    bne -
+
+; start writing pixels after two rows (4 bytes for each row)
+    clc
+    lda z_location2
+    adc #8
+    sta z_location2
+    bcc .handle_col
+    inc z_location2+1
+        
+.handle_col
+    lda (z_location),y
+    bit .m_64   ;is xor-bit set?
+    bvc .write_value  ;branch if this bit is not xored
+    
+    pha
+    and #1
+    sta z_temp
+    pla
+    and m_maskbit
+    bne +
+    lda #0
+    jmp ++
++   lda #1
+++  eor z_temp
+    
+.write_value
+    bit .m_one
+    beq +
+
+    ;ldx #32             ; black module (prints space)
+                        ; don't need to do anything for sprite here (as bits are 0 already)
+;    jmp ++
+
+    ;ldx #160            ; white module (prints inverse space)
+    lda z_sprite_byte
+    ora z_sprite_bit
+    sta z_sprite_byte   ; collect module for sprite byte
+
++   lda z_sprite_bit    ; shift bit to the right
+    clc
+    lsr
+    sta z_sprite_bit
+    bcc +               ; carry flag not set (ie sprite byte not full)
+    
+    ; if sprite bit is zero (carry flag set), sprite byte is full
+    jsr .write_sprite_byte
+    lda #%10000000
+    jsr .reset_sprite_byte
+    
+    ;move on
++   iny
+    cpy size
+    bne .handle_col
+    
+    ; finish line
+    ldy #0
+    jsr .inc_line2
+    jsr inc_line  
+    cmp m_endAddress    ;needs to have z_location in accumulator
+    beq .end
+    jmp .handle_col
+
+.end
+    rts
+    
+    
+.inc_line2    
+    jsr .write_sprite_byte
+    lda #0
+    sta z_sprite_offset
+    lda #%00100000
+    jsr .reset_sprite_byte
+    clc
+    lda z_location2
+    adc #4
+    sta z_location2
+    bcc +
+    inc z_location2+1
+
++   rts
+
+.reset_sprite_byte
+    sta z_sprite_bit            ;used to keep track of bit    
+    lda #0
+    sta z_sprite_byte            ;used to collect the byte value for 8 modules each
+    rts
+
+.write_sprite_byte
+    sty z_temp
+    
+    ldy z_sprite_offset    
+    lda z_sprite_byte
+    sta (z_location2),y
+    inc z_sprite_offset
+
+    ldy z_temp
+    rts
+
+.m_one          !byte 1
+.m_64           !byte 64
+m_l3           !byte 0,0
