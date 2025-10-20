@@ -51,15 +51,15 @@ init:
 !pet "Detecting and querying firmware",$d,$0
     jsr detectAndFirmware
 
+
+getTime
     +wic64_execute time_request, time_response, 5
 
     lda #<time_response
     sta address_html
     lda #>time_response
     sta address_html+1
-
     rts
-
 
 main:
     sta input
@@ -108,7 +108,9 @@ main:
     lda input
     ora #%10000000  ; restore value so we can check it again later
     sta input
+    jsr getTime
     pla
+
 ++  jsr handleResponse
 
     lda input
@@ -123,8 +125,6 @@ main:
     sta address_html
     lda responseSize+1
     sta address_html+1
-
-    rts
 
 endOfProgram
     lda #%00000000
