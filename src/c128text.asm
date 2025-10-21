@@ -248,8 +248,13 @@ createQr
     bpl -
 
     jsr startQrCodeGenerator
-
     pha
+
+    lda #<qr_url
+    sta $fb
+    lda #>qr_url
+    sta $fc
+
     jsr endOfProgram
     pla
 

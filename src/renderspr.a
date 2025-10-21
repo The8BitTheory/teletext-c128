@@ -7,8 +7,7 @@
 renderspr
 
 !zone render
-z_sprite_bit    = z_counter1
-z_sprite_byte   = z_counter1+1
+z_sprite_byte   = z_counter1
 z_sprite_offset = z_counter2
 
     jsr set_location_to_data
@@ -18,9 +17,6 @@ z_sprite_offset = z_counter2
     sty z_location2
     sty z_location2+1
     
-    lda #%00100000
-    jsr .reset_sprite_byte
-
     ;calculate pixel output address. comes after data (same as datastream location in previous steps)
     ; m_l3: store z_location2 for later return to caller. current value will be changed.
 
@@ -37,19 +33,13 @@ z_sprite_offset = z_counter2
 
     
     ;clear memory area
+    ; maybe not needed, as we're writing every byte
     lda #0
-    ldy #0
+    tax
+    tay
 -   sta (z_location2),y
     dey
     bne -
-
-; start writing pixels after two rows (4 bytes for each row)
-    clc
-    lda z_location2
-    adc #8
-    sta z_location2
-    bcc .handle_col
-    inc z_location2+1
         
 .handle_col
     lda (z_location),y
@@ -70,26 +60,23 @@ z_sprite_offset = z_counter2
 .write_value
     bit .m_one
     beq +
+    lda #$00
+    jmp ++
 
-    ;ldx #32             ; black module (prints space)
-                        ; don't need to do anything for sprite here (as bits are 0 already)
-;    jmp ++
+    ; white module (prints inverse space)
++   lda #$ff
+;    lda z_sprite_byte
+;    ora z_sprite_bit
+++  sta z_sprite_byte   ; collect module for sprite byte
 
-    ;ldx #160            ; white module (prints inverse space)
-    lda z_sprite_byte
-    ora z_sprite_bit
-    sta z_sprite_byte   ; collect module for sprite byte
-
-+   lda z_sprite_bit    ; shift bit to the right
-    clc
-    lsr
-    sta z_sprite_bit
-    bcc +               ; carry flag not set (ie sprite byte not full)
+;    lda z_sprite_bit    ; shift bit to the right
+;    clc
+;    lsr
+;    sta z_sprite_bit
+;    bcc +               ; carry flag not set (ie sprite byte not full)
     
     ; if sprite bit is zero (carry flag set), sprite byte is full
     jsr .write_sprite_byte
-    lda #%10000000
-    jsr .reset_sprite_byte
     
     ;move on
 +   iny
@@ -112,32 +99,21 @@ z_sprite_offset = z_counter2
     jsr .write_sprite_byte
     lda #0
     sta z_sprite_offset
-    lda #%00100000
-    jsr .reset_sprite_byte
     clc
     lda z_location2
-    adc #4
+    adc size
     sta z_location2
     bcc +
     inc z_location2+1
 
 +   rts
 
-.reset_sprite_byte
-    sta z_sprite_bit            ;used to keep track of bit    
-    lda #0
-    sta z_sprite_byte            ;used to collect the byte value for 8 modules each
-    rts
-
 .write_sprite_byte
-    sty z_temp
-    
     ldy z_sprite_offset    
     lda z_sprite_byte
     sta (z_location2),y
     inc z_sprite_offset
 
-    ldy z_temp
     rts
 
 .m_one          !byte 1
