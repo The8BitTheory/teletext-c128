@@ -1,4 +1,5 @@
-﻿; this renders the qr-code to a 64-pixel wide vic-iv sprite.
+﻿; this renders the qr-code to pixeldata that's intended for vdc-display
+;  the 29x29 code (which it is very likely to be) will be displayed as 15x15 characters
 ; z_location contains the pointer to read from
 ; z_location2 is the pointer to write the sprite pixels to.
 ; 

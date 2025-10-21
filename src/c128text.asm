@@ -47,6 +47,7 @@ address_vram = $fd
     jmp getIp
     jmp init
     jmp createQr
+    jmp getTime
 
 init:
     jsr k_primm
@@ -110,7 +111,6 @@ main:
     lda input
     ora #%10000000  ; restore value so we can check it again later
     sta input
-    jsr getTime
     pla
 
 ++  jsr handleResponse
@@ -240,9 +240,20 @@ createQr
 ; disable basic rom. bank 0, kernal and I/O enabled
     lda #%00001110
     sta $ff00
+
+    ldx #2
+-   lda nav_page,x
+    sta qr_page,x
+    dex
+    bpl -
+
     jsr startQrCodeGenerator
 
-    jmp endOfProgram
+    pha
+    jsr endOfProgram
+    pla
+
+    rts
 
 ; define request to get the current ip address
 request !byte "R", WIC64_GET_IP, $00, $00
