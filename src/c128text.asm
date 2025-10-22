@@ -50,10 +50,12 @@ address_vram = $fd
     jmp getTime
 
 init:
-    jsr k_primm
-!pet "Detecting and querying firmware",$d,$0
-    jsr detectAndFirmware
+    lda #0
+    sta returnValue
 
+    jsr k_primm
+!pet "detecting and querying firmware",$d,$0
+    jsr detectAndFirmware
 
 getTime
     +wic64_execute time_request, time_response, 5
@@ -62,6 +64,14 @@ getTime
     sta address_html
     lda #>time_response
     sta address_html+1
+
+    lda #<screen_prep
+    sta address_vram
+    lda #>screen_prep
+    sta address_vram+1
+
+    lda returnValue
+    
     rts
 
 main:
@@ -92,7 +102,7 @@ main:
     ; if first digit of input has bit7 set, we request the nav-data of the page, not the page itself
     lda input
     bmi +
-    +wic64_execute txt_request, data_response, 5
+-   +wic64_execute txt_request, data_response, 5
     jmp ++
 
 ; write page string to request-url
@@ -122,7 +132,8 @@ main:
 
 +   jsr parseHtml
 
-    ; response Size is needed so we can save to disk. 
+    ; response Size is needed so we can save to disk.
+    ; if we have a problem, this should be zero
 ++  lda responseSize
     sta address_html
     lda responseSize+1
@@ -136,7 +147,7 @@ endOfProgram
 
 getIp
     jsr k_primm
-!pet "Querying IP",$d,0
+!pet "querying IP",$d,0
 
     +wic64_execute request, response, 5        ; send request and receive the response
     bcc +                   ; carry set means timeout. carry clear = no timeout
@@ -160,13 +171,6 @@ response: !fill 16, $ea
 
 handleResponse:
     
-    bcc +           ; carry set means timeout. carry clear = no timeout
-    dec timeoutRetry
-    beq timeout
-    jmp handleResponse
-
-+   bne error
-
     lda wic64_response_size
     sta responseSize
     lda wic64_response_size+1
@@ -190,6 +194,7 @@ timeout:
     !pet "?timeout error", $00
     lda #3
     sta timeoutRetry
+
     rts
 
 error:
@@ -213,21 +218,24 @@ detectAndFirmware
     lda wic64_status
     bne legacy_firmware                     ; zero flag clear => legacy firmware detected
 
-    lda #<screen_prep
-    sta address_vram
-    lda #>screen_prep
-    sta address_vram+1
-
     rts
 
 device_not_present:                         ; print appropriate error message...
     jsr k_primm
     !pet "?device not present or unresponsive error", $00
+
+    lda #1
+    sta returnValue
+
     rts
 
 legacy_firmware:
     jsr k_primm
     !pet "?legacy firmware error", $00
+
+    lda #2
+    sta returnValue
+
     rts
 
 clearResponseSize
@@ -257,6 +265,13 @@ createQr
 
     jsr endOfProgram
     pla
+
+    rts
+
+checkForProblems
+    ;check for timeout
+
+    ;check for server error
 
     rts
 
@@ -297,6 +312,13 @@ timeoutRetry    !byte 3
 
 ; temp storage. will be written to $fb/$fc upon completion
 responseSize    !word 0
+
+; will use this to return status information to the basic program
+; 0=ok
+; 1=no wic64 found
+; 2=firmware too old
+; 3=http error
+returnValue     !byte 0
 
 ; include the actual wic64 routines
 !source "wic64.asm"
