@@ -104,7 +104,11 @@ main:
     lda input
     bmi +
 -   +wic64_execute txt_request, data_response, 5
-    jmp ++
+    beq ++              ; != 0. no error
+    jsr endOfProgram    ; =0 zero flag clear: error occurred. error code in .a
+    lda #3
+    sta returnValue
+    rts
 
 ; write page string to request-url
 +   and #%01111111  ; remove highest bit, leaves us with a valid page number
@@ -118,7 +122,13 @@ main:
     bne -
 
     +wic64_execute nav_request, data_response, 5
-    pha
+    beq +               ; =0. no error    
+    jsr endOfProgram    ; =!0 zero flag clear: error occurred. error code in .a
+    lda #3
+    sta returnValue
+    rts
+
++   pha
     lda input
     ora #%10000000  ; restore value so we can check it again later
     sta input
@@ -316,7 +326,7 @@ copy
     inc address_html+1
     jmp -
 
-    bpl -
+
 
 copyDone
     lda tempStore
@@ -328,7 +338,7 @@ copyDone
     sta address_vram
     lda #>screen_prep
     sta address_vram+1
-    
+
     jmp endOfProgram
 
 ; define request to get the current ip address
