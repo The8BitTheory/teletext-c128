@@ -19,7 +19,7 @@ bsout = $ffd2
 
 address_html = $fb
 address_vram = $fd
-
+dump_safe   = $b800
 
 ;data_response = $2400
 
@@ -41,13 +41,14 @@ address_vram = $fd
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $3000
+*= $3100
 
     jmp main
     jmp getIp
     jmp init
     jmp createQr
     jmp getTime
+    jmp copy
 
 init:
     lda #0
@@ -275,6 +276,61 @@ checkForProblems
 
     rts
 
+copy
+    ;copy 2048 bytes from address_vram to $b800 (dec 47104), 2kb below i/o space
+    ; we only need 2024 bytes
+    lda #%00001110
+    sta $ff00
+
+;set counter to 2024 (1024 for screen-ram, 1000 for color ram. we'll use the 24 in between wisely)
+    lda #$e8
+    sta counter
+    lda #$07
+    sta counter+1
+
+    lda address_html
+    sta tempStore
+    lda address_html+1
+    sta tempStore+1
+
+    lda #<dump_safe
+    sta address_html
+    lda #>dump_safe
+    sta address_html+1
+
+    lda #<screen_prep
+    sta address_vram
+    lda #>screen_prep
+    sta address_vram+1
+
+    ldy #0
+-   lda (address_vram),y
+    sta (address_html),y
+    dec counter
+    bne ++
+    dec counter+1
+    bmi copyDone
+++  iny
+    bne -
+    inc address_vram+1
+    inc address_html+1
+    jmp -
+
+    bpl -
+
+copyDone
+    lda tempStore
+    sta address_html
+    lda tempStore+1
+    sta address_html+1
+
+    lda #<screen_prep
+    sta address_vram
+    lda #>screen_prep
+    sta address_vram+1
+    
+    jmp endOfProgram
+
 ; define request to get the current ip address
 request !byte "R", WIC64_GET_IP, $00, $00
 
@@ -306,7 +362,8 @@ qr_url_length = *-qr_url
 time_request    !byte "R", WIC64_GET_LOCAL_TIME, $00, $00
 time_response   !fill 20,0
 
-digit           !byte 0
+counter         !word 0
+tempStore       !word 0
 minInput        !byte '1','0','0'
 timeoutRetry    !byte 3
 
