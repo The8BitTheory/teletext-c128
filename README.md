@@ -10,3 +10,6 @@ Uses resolution 640x225.
 Characters are 16x9 pixels.
 
 Directly pulls data from the original server, parses and extracts from HTML in 6502 assembly. 
+
+Find a short 2 mins video explaining the program here:
+https://youtube.com/shorts/kwVZ3GBHu4Q?feature=share
