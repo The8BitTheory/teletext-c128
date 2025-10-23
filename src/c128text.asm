@@ -1,3 +1,7 @@
+; ASM Utility for the ARD Videotext Viewer for the C128 VDC
+; written by Martin Goodwell in October 2025
+; find the sourcecode at https://github.com/The8BitTheory/teletext-c128
+
 ; include the wic64 header file containing the macro definitions
 wic64_include_enter_portal = 0
 wic64_include_load_and_run = 0
@@ -365,6 +369,7 @@ qr_url          !text "https://www.ard-text.de/index.php?page="
 qr_page         !byte 1,0,0
 qr_url_length = *-qr_url
 
+;https://github.com/The8BitTheory/teletext-c128
 ;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
 
 
