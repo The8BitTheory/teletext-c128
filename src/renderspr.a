@@ -1,18 +1,15 @@
 ﻿; this renders the qr-code to pixeldata that's intended for vdc-display
 ;  the 29x29 code (which it is very likely to be) will be displayed as 15x15 characters
+;  this is very close to the original petscii 1x1 render.a
 ; z_location contains the pointer to read from
 ; z_location2 is the pointer to write the sprite pixels to.
-; 
 
 renderspr
 
 !zone render
-z_sprite_byte   = z_counter1
-z_sprite_offset = z_counter2
 
     jsr set_location_to_data
     ldy #0                    ;y holds the column (reset to zero after eol is reached)
-    sty z_sprite_offset
     ; z_location2 will hold the value of spriteOut times 64l
     sty z_location2
     sty z_location2+1
@@ -31,16 +28,7 @@ z_sprite_offset = z_counter2
     sta z_location2+1
     sta m_l3+1
 
-    
-    ;clear memory area
-    ; maybe not needed, as we're writing every byte
-    lda #0
-    tax
-    tay
--   sta (z_location2),y
-    dey
-    bne -
-        
+            
 .handle_col
     lda (z_location),y
     bit .m_64   ;is xor-bit set?
@@ -65,18 +53,8 @@ z_sprite_offset = z_counter2
 
     ; white module (prints inverse space)
 +   lda #$ff
-;    lda z_sprite_byte
-;    ora z_sprite_bit
-++  sta z_sprite_byte   ; collect module for sprite byte
-
-;    lda z_sprite_bit    ; shift bit to the right
-;    clc
-;    lsr
-;    sta z_sprite_bit
-;    bcc +               ; carry flag not set (ie sprite byte not full)
-    
     ; if sprite bit is zero (carry flag set), sprite byte is full
-    jsr .write_sprite_byte
+++  sta (z_location2),y
     
     ;move on
 +   iny
@@ -96,9 +74,6 @@ z_sprite_offset = z_counter2
     
     
 .inc_line2    
-    jsr .write_sprite_byte
-    lda #0
-    sta z_sprite_offset
     clc
     lda z_location2
     adc size
@@ -107,14 +82,6 @@ z_sprite_offset = z_counter2
     inc z_location2+1
 
 +   rts
-
-.write_sprite_byte
-    ldy z_sprite_offset    
-    lda z_sprite_byte
-    sta (z_location2),y
-    inc z_sprite_offset
-
-    rts
 
 .m_one          !byte 1
 .m_64           !byte 64
