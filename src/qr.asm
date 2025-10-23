@@ -126,6 +126,6 @@ m_zpal2         !word 0
 
 !source "src/renderspr.a"
 
-data = screen_prep
-;data = data_response
+;data = screen_prep
+data = data_response
 ;data    !byte 0

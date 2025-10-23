@@ -45,14 +45,15 @@ dump_safe   = $b800
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $3500
+*= $3580
 
     jmp main
     jmp getIp
     jmp init
-    jmp createQr
+    jmp createTxtQr
     jmp getTime
     jmp copy
+    jmp createCreditsQr
 
 init:
     lda #0
@@ -259,9 +260,31 @@ clearResponseSize
     sta address_html+1
     rts
 
+createCreditsQr
+    ldx #<credit_url
+    stx z_location2
+    ldx #>credit_url
+    stx z_location2+1
+    
+    lda #credit_url_length
+    sta contentLength
+    jmp createQr
+
+createTxtQr
+    ; usually the output address for petscii-to-ascii conversion
+    ; we only have ascii here anyways
+    ; so this is where we can read the readily available URL from
+    ldx #<qr_url
+    stx z_location2
+    ldx #>qr_url
+    stx z_location2+1
+    
+    lda #qr_url_length
+    sta contentLength
+
 createQr
-; disable basic rom. bank 0, kernal and I/O enabled
-    lda #%00001110
+; disable basic rom and I/O. bank 0, kernal and I/O enabled
+    lda #%00001111
     sta $ff00
 
     ldx #2
@@ -369,7 +392,9 @@ qr_url          !text "https://www.ard-text.de/index.php?page="
 qr_page         !byte 1,0,0
 qr_url_length = *-qr_url
 
-;https://github.com/The8BitTheory/teletext-c128
+credit_url      !text "https://github.com/The8BitTheory/teletext-c128"
+credit_url_length = *-credit_url
+
 ;orf_url:        !text "https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/100"
 
 
