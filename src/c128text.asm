@@ -12,8 +12,8 @@ wic64_optimize_for_size = 1
 chrget = $0380
 chrgot = $0386
 
-b_skip_comma      = $795c ; if comma: skip, otherwise: syntax error
-b_parse_uint8_to_X    = $87f4 ; read unsigned 8-bit value to X
+ab_skip_comma      = $795c ; if comma: skip, otherwise: syntax error
+ab_parse_uint8_to_X    = $87f4 ; read unsigned 8-bit value to X
 
 k_primm = $ff7d
 k_getin = $eeeb
@@ -45,7 +45,7 @@ dump_safe   = $b800
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $3580
+*= $3b80
 
     jmp main
     jmp getIp
@@ -64,6 +64,7 @@ init:
     jsr detectAndFirmware
 
 getTime
+    jsr restoreRomsetup
     +wic64_execute time_request, time_response, 5
 
     lda #<time_response
@@ -85,6 +86,10 @@ main:
     stx input+1
     sty input+2
 
+; disable basic rom. bank 0, kernal and I/O enabled
+    lda #%00000010
+    sta $ff00
+
     ; do we have more parameters? ie the subpage
     jsr chrgot
     beq +
@@ -100,10 +105,6 @@ main:
     stx nav_subinput+1
 
 +   jsr clearResponseSize
-
-; disable basic rom. bank 0, kernal and I/O enabled
-    lda #%00001110
-    sta $ff00
 
     ; if first digit of input has bit7 set, we request the nav-data of the page, not the page itself
     lda input
@@ -229,10 +230,11 @@ status_response: !fill 40,$ea
     rts
 
 detectAndFirmware
+    jsr restoreRomsetup
     +wic64_detect                           ; detect wic64 device and firmware
     bcs device_not_present                  ; carry set => wic64 not present or unresponsive
     lda wic64_status
-    bne legacy_firmware                     ; zero flag clear => legacy firmware detected
+    bne legacy_firmware                     ; zero flag set  => legacy firmware detected
 
     rts
 
@@ -367,6 +369,34 @@ copyDone
     sta address_vram+1
 
     jmp endOfProgram
+
+
+;   0:off=i/o, on=ram as of bits 4-5 (char-rom or int/ext func rom) - $d000-$dfff
+;   1:off=basic rom low, on=ram as of bits 6-7 - $4000
+; 2-3:off=basic rom high and monitor rom, on=ram (other are int/ext func rom) - $8000
+; 4-5:off=char-rom, kernal-rom ($e000), on=ram - 
+; 6-7;ram block 0-3 (00-11)
+
+b_skip_comma
+    pha
+    lda #%00000001
+    sta $ff00
+    pla
+    jsr ab_skip_comma
+    jmp restoreRomsetup
+
+b_parse_uint8_to_X
+    pha
+    lda #%00000001
+    sta $ff00
+    pla
+    jsr ab_parse_uint8_to_X
+restoreRomsetup
+    pha
+    lda #%00000000
+    sta $ff00
+    pla
+    rts
 
 ; define request to get the current ip address
 request !byte "R", WIC64_GET_IP, $00, $00
