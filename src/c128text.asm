@@ -2,6 +2,20 @@
 ; written by Martin Goodwell in October 2025
 ; find the sourcecode at https://github.com/The8BitTheory/teletext-c128
 
+
+; basic: $4000-$bfff
+; screen editor: $c000-$cfff
+; i/o: $d000-$dfff
+; kernal: $e000-$ffff
+; ram banking use-cases:
+; executing machinelanguage code: i/o disabled, kernal enabled, basic disabled. goes up to $c000
+; wic64 access: I/O enabled, maybe kernal enabled, basic lo and hi disabled
+; parsing parameters: i/o disabled, kernal enabled, basic lo and hi enabled
+; so, we can just swap out $4000-$bfff and leave everything above enabled
+; i/o = always on (0:0)
+; basic = on or off (1,2,3: basic=000, ram=111)
+; $c000 and above: always on (4,5:00)
+
 ; include the wic64 header file containing the macro definitions
 wic64_include_enter_portal = 0
 wic64_include_load_and_run = 0
@@ -12,8 +26,8 @@ wic64_optimize_for_size = 1
 chrget = $0380
 chrgot = $0386
 
-b_skip_comma      = $795c ; if comma: skip, otherwise: syntax error
-b_parse_uint8_to_X    = $87f4 ; read unsigned 8-bit value to X
+ab_skip_comma      = $795c ; if comma: skip, otherwise: syntax error
+ab_parse_uint8_to_X    = $87f4 ; read unsigned 8-bit value to X
 
 k_primm = $ff7d
 k_getin = $eeeb
@@ -56,6 +70,8 @@ dump_safe   = $b800
     jmp createCreditsQr
 
 init:
+    jsr disableBasicRom
+
     lda #0
     sta returnValue
 
@@ -77,10 +93,14 @@ getTime
     sta address_vram+1
 
     lda returnValue
-    
-    rts
+
+    jmp enableBasicRom    
+;    rts
 
 main:
+; disable basic rom. bank 0. kernal and I/O enabled
+    jsr disableBasicRom
+
     sta input
     stx input+1
     sty input+2
@@ -100,10 +120,6 @@ main:
     stx nav_subinput+1
 
 +   jsr clearResponseSize
-
-; disable basic rom. bank 0, kernal and I/O enabled
-    lda #%00001110
-    sta $ff00
 
     ; if first digit of input has bit7 set, we request the nav-data of the page, not the page itself
     lda input
@@ -156,12 +172,10 @@ main:
     sta address_html+1
 
 endOfProgram
-    lda #%00000000
-    sta $ff00
-
-    rts
+    jmp enableBasicRom
 
 getIp
+    jsr disableBasicRom
     jsr k_primm
 !pet "querying IP",$d,0
 
@@ -183,7 +197,7 @@ response: !fill 16, $ea
     lda #$0d
     jsr bsout
 
-+   rts
++   jmp enableBasicRom
 
 handleResponse:
     
@@ -283,9 +297,8 @@ createTxtQr
     sta contentLength
 
 createQr
-; disable basic rom and I/O. bank 0, kernal and I/O enabled
-    lda #%00001111
-    sta $ff00
+; disable basic rom and I/O. bank 0. kernal and I/O enabled
+    jsr disableBasicRom
 
     ldx #2
 -   lda nav_page,x
@@ -306,6 +319,31 @@ createQr
 
     rts
 
+disableBasicRom
+    pha
+    lda #%00001110
+    sta $ff00
+    pla
+    rts
+
+enableBasicRom
+    pha
+    lda #%00000000
+    sta $ff00
+    pla
+    rts
+
+b_parse_uint8_to_X
+    jsr enableBasicRom
+    jsr ab_parse_uint8_to_X
+    jmp disableBasicRom
+
+b_skip_comma
+    jsr enableBasicRom
+    jsr ab_skip_comma
+    jmp disableBasicRom
+
+
 checkForProblems
     ;check for timeout
 
@@ -316,8 +354,7 @@ checkForProblems
 copy
     ;copy 2048 bytes from address_vram to $b800 (dec 47104), 2kb below i/o space
     ; we only need 2024 bytes
-    lda #%00001110
-    sta $ff00
+    jsr disableBasicRom
 
 ;set counter to 2024 (1024 for screen-ram, 1000 for color ram. we'll use the 24 in between wisely)
     lda #$e8
@@ -352,8 +389,6 @@ copy
     inc address_vram+1
     inc address_html+1
     jmp -
-
-
 
 copyDone
     lda tempStore
