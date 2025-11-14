@@ -59,7 +59,7 @@ dump_safe   = $b800
 ;    !byte $11,$1c,$e9,$07,$fe,$25,$3a,$9e,$37,$31,$38,$38,$3a,$fe,$26,$00,$00,$00
 
 ;*= $1c14
-*= $3780
+*= $3880
 
     jmp main
     jmp getIp
@@ -68,6 +68,35 @@ dump_safe   = $b800
     jmp getTime
     jmp copy
     jmp createCreditsQr
+
+
+; putting these here at the beginning, because the further this code moves back in memory (towards $4000)
+;  the sooner we'd run into problems because of memory banking conflict with basic-rom.
+
+disableBasicRom
+    pha
+    lda #%00001110
+    sta $ff00
+    pla
+    rts
+
+enableBasicRom
+    pha
+    lda #%00000000
+    sta $ff00
+    pla
+    rts
+
+b_parse_uint8_to_X
+    jsr enableBasicRom
+    jsr ab_parse_uint8_to_X
+    jmp disableBasicRom
+
+b_skip_comma
+    jsr enableBasicRom
+    jsr ab_skip_comma
+    jmp disableBasicRom
+
 
 init:
     jsr disableBasicRom
@@ -318,31 +347,6 @@ createQr
     pla
 
     rts
-
-disableBasicRom
-    pha
-    lda #%00001110
-    sta $ff00
-    pla
-    rts
-
-enableBasicRom
-    pha
-    lda #%00000000
-    sta $ff00
-    pla
-    rts
-
-b_parse_uint8_to_X
-    jsr enableBasicRom
-    jsr ab_parse_uint8_to_X
-    jmp disableBasicRom
-
-b_skip_comma
-    jsr enableBasicRom
-    jsr ab_skip_comma
-    jmp disableBasicRom
-
 
 checkForProblems
     ;check for timeout
